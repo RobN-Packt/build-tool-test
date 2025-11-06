@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/nx/project.json",
+  "name": "api",
+  "root": "apps/api",
+  "sourceRoot": "apps/api",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@book-poc/nx-go:run",
+      "options": {
+        "command": "go build ./cmd/api"
+      }
+    },
+    "test": {
+      "executor": "@book-poc/nx-go:run",
+      "options": {
+        "command": "go test ./..."
+      }
+    }
+  },
+  "tags": []
+}

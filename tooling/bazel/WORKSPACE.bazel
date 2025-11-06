@@ -1,0 +1,6 @@
+# Bazel configuration for the monorepo lives at the root (MODULE.bazel).
+# This file exists so developers can inspect the Bazel-specific setup in one place
+# while keeping the repository layout requested in the PoC brief.
+load("@gazelle//:deps.bzl", "gazelle_dependencies")
+
+gazelle_dependencies()

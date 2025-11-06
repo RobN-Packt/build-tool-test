@@ -1,0 +1,37 @@
+{
+  "name": "@book-poc/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "codegen": "pnpm --filter contracts gen"
+  },
+  "dependencies": {
+    "next": "14.2.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "openapi-fetch": "^0.10.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "@testing-library/jest-dom": "^6.4.1",
+    "@testing-library/react": "^15.0.1",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "20.11.30",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.4",
+    "jsdom": "^24.0.0",
+    "playwright": "^1.48.2",
+    "typescript": "5.4.5",
+    "vitest": "1.6.0"
+  }
+}

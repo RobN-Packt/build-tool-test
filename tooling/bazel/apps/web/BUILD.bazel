@@ -1,0 +1,17 @@
+sh_binary(
+    name = "build",
+    srcs = ["//tooling/bazel/tools:pnpm_wrapper.sh"],
+    args = ["--filter", "web", "build"],
+)
+
+sh_test(
+    name = "test",
+    srcs = ["//tooling/bazel/tools:pnpm_wrapper.sh"],
+    args = ["--filter", "web", "test"],
+)
+
+sh_test(
+    name = "e2e",
+    srcs = ["//tooling/bazel/tools:pnpm_wrapper.sh"],
+    args = ["--filter", "web", "test:e2e"],
+)

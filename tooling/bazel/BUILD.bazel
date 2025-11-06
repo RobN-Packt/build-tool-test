@@ -1,0 +1,11 @@
+alias(
+    name = "build_all",
+    actual = "//tooling/bazel/apps:build_all",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "test_all",
+    actual = "//tooling/bazel/apps:test_all",
+    visibility = ["//visibility:public"],
+)

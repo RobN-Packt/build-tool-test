@@ -1,0 +1,41 @@
+# Project
+node_modules/
+pnpm-lock.yaml
+dist/
+out/
+.next/
+.turbo/
+tmp/
+coverage/
+
+# Go
+bin/
+vendor/
+
+# Editors
+.idea/
+.vscode/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+terraform.tfvars
+
+# Docker
+*.log
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Playwright
+playwright-report/
+.playwright-cache/
+
+# Bazel
+bazel-*/
+
+# Nx
+.nx/cache/

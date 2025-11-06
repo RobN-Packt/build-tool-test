@@ -1,0 +1,33 @@
+steps:
+  - label: ":bazel: Bazel"
+    commands:
+      - pnpm install --recursive --frozen-lockfile
+      - pnpm --filter contracts gen
+      - bazel build //tooling/bazel:build_all
+      - bazel test //tooling/bazel:test_all
+
+  - label: ":nx: Nx"
+    commands:
+      - pnpm install --recursive --frozen-lockfile
+      - pnpm --filter contracts gen
+      - pnpm nx run-many --target=build
+      - pnpm nx run-many --target=test
+
+  - label: ":task: Task"
+    commands:
+      - pnpm install --recursive --frozen-lockfile
+      - pnpm --filter contracts gen
+      - pnpm dlx task build
+      - pnpm dlx task test
+
+  - wait
+
+  - label: ":aws: Deploy"
+    branches: "main"
+    commands:
+      - pnpm install --recursive --frozen-lockfile
+      - pnpm --filter contracts gen
+      - pnpm nx run-many --target=build
+      - pnpm nx run-many --target=test
+      - cd infra/terraform && terraform init && terraform apply -auto-approve
+      - ./scripts/deploy.sh

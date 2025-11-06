@@ -1,0 +1,14 @@
+version: "3"
+
+tasks:
+  build:
+    cmds:
+      - go build ./cmd/api
+
+  test:
+    cmds:
+      - go test ./...
+
+  run:
+    cmds:
+      - go run ./cmd/api

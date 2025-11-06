@@ -1,0 +1,81 @@
+name: Deploy
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-oidc-role
+          aws-region: eu-west-1
+
+      - name: Install deps
+        run: pnpm install --recursive --frozen-lockfile
+
+      - name: Generate OpenAPI artifacts
+        run: pnpm --filter contracts gen
+
+      - name: Build artifacts
+        run: |
+          pnpm nx run-many --target=build
+          pnpm nx run-many --target=test
+
+      - name: Terraform init
+        working-directory: infra/terraform
+        run: terraform init
+
+      - name: Terraform apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: infra/terraform
+        run: terraform apply -auto-approve
+
+      - name: Authenticate Docker to ECR
+        run: aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
+
+      - name: Build & push images
+        run: |
+          docker build -t api:latest apps/api
+          docker tag api:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/poc/api:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/poc/api:latest
+          docker build -t web:latest apps/web
+          docker tag web:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/poc/web:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/poc/web:latest
+          docker build -t worker:latest apps/worker
+          docker tag worker:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/poc/worker:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/poc/worker:latest
+
+      - name: Force new ECS deployment
+        run: aws ecs update-service --cluster poc-cluster --service poc-api --force-new-deployment
+
+      - name: Update Lambda function image
+        run: aws lambda update-function-code --function-name poc-purchase-worker --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/poc/worker:latest
+
+      - name: Upload frontend assets
+        run: |
+          aws s3 sync apps/web/.next/static s3://book-poc-web-static/_next/static --delete
+
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

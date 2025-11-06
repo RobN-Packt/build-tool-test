@@ -1,0 +1,19 @@
+{
+  "name": "@book-poc/nx-go",
+  "private": true,
+  "scripts": {
+    "build": "nx run-many --target=build",
+    "test": "nx run-many --target=test"
+  },
+  "dependencies": {
+    "nx": "18.0.0"
+  },
+  "nx": {
+    "executors": {
+      "go-run": {
+        "implementation": "./tools/executors/go-run.js",
+        "schema": "./tools/executors/go-run.schema.json"
+      }
+    }
+  }
+}

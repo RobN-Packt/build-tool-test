@@ -1,0 +1,15 @@
+version: "3"
+
+tasks:
+  build:
+    cmds:
+      - pnpm install --frozen-lockfile --prefer-offline
+      - pnpm build
+
+  test:
+    cmds:
+      - pnpm test
+
+  lint:
+    cmds:
+      - pnpm lint

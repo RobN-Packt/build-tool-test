@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  api:
+    build: ./apps/api
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      AWS_REGION: ${AWS_REGION:-eu-west-1}
+      SQS_QUEUE_URL: http://queue:9324/000000000000/purchases
+    depends_on:
+      - queue
+
+  web:
+    build: ./apps/web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://api:8080
+    depends_on:
+      - api
+
+  worker:
+    build: ./apps/worker
+    environment:
+      AWS_REGION: ${AWS_REGION:-eu-west-1}
+      QUEUE_URL: http://queue:9324/000000000000/purchases
+    depends_on:
+      - queue
+
+  queue:
+    image: softwaremill/elasticmq:1.4.5
+    ports:
+      - "9324:9324"

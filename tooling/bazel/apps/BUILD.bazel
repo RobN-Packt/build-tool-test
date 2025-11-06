@@ -1,0 +1,22 @@
+filegroup(
+    name = "build_all",
+    srcs = [],
+    data = [
+        "//tooling/bazel/apps/api:api",
+        "//tooling/bazel/apps/web:build",
+        "//tooling/bazel/apps/worker:build",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "test_all",
+    srcs = [],
+    data = [
+        "//tooling/bazel/apps/api:tests",
+        "//tooling/bazel/apps/web:test",
+        "//tooling/bazel/apps/web:e2e",
+        "//tooling/bazel/apps/worker:test",
+    ],
+    visibility = ["//visibility:public"],
+)

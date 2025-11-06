@@ -1,0 +1,33 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: eu-west-1
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+      golang: 1.22
+    commands:
+      - corepack enable
+      - pnpm install --recursive --frozen-lockfile
+  pre_build:
+    commands:
+      - pnpm --filter contracts gen
+  build:
+    commands:
+      - pnpm nx run-many --target=build
+      - pnpm nx run-many --target=test
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/poc/api:latest apps/api
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/poc/web:latest apps/web
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/poc/worker:latest apps/worker
+  post_build:
+    commands:
+      - aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/poc/api:latest
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/poc/web:latest
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/poc/worker:latest
+      - cd infra/terraform
+      - terraform init
+      - terraform apply -auto-approve

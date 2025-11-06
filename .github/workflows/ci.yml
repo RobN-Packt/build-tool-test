@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["*"]
+  push:
+    branches: ["main"]
+
+jobs:
+  build-test:
+    name: "Build & Test (${{ matrix.tool }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [bazel, nx, task]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+          cache: true
+
+      - name: Install dependencies
+        run: pnpm install --recursive --frozen-lockfile
+
+      - name: Generate contracts
+        run: pnpm --filter contracts gen
+
+      - name: Run Bazel targets
+        if: matrix.tool == 'bazel'
+        run: |
+          bazel build //tooling/bazel:build_all
+          bazel test //tooling/bazel:test_all
+
+      - name: Run Nx targets
+        if: matrix.tool == 'nx'
+        run: |
+          pnpm nx run-many --target=build
+          pnpm nx run-many --target=test
+
+      - name: Run Taskfile targets
+        if: matrix.tool == 'task'
+        run: |
+          pnpm dlx task gen
+          pnpm dlx task build
+          pnpm dlx task test
+
+      - name: Build Docker images
+        run: |
+          docker build -t api:ci apps/api
+          docker build -t web:ci apps/web
+          docker build -t worker:ci apps/worker

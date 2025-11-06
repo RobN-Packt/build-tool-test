@@ -1,0 +1,38 @@
+version: "3"
+
+includes:
+  api: ./apps/api/Taskfile.yml
+  web: ./apps/web/Taskfile.yml
+  worker: ./apps/worker/Taskfile.yml
+
+tasks:
+  gen:
+    desc: "Generate OpenAPI clients and types"
+    cmds:
+      - pnpm --filter contracts gen
+
+  build:
+    deps: [gen]
+    cmds:
+      - task: api:build
+      - task: web:build
+      - task: worker:build
+
+  test:
+    deps: [gen]
+    cmds:
+      - task: api:test
+      - task: web:test
+      - task: worker:test
+
+  docker:
+    cmds:
+      - docker compose build
+
+  up:
+    cmds:
+      - docker compose up
+
+  clean:
+    cmds:
+      - rm -rf apps/web/.next apps/web/dist apps/worker/dist

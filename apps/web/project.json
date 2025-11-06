@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/nx/project.json",
+  "name": "web",
+  "root": "apps/web",
+  "sourceRoot": "apps/web",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false,
+        "command": "pnpm --filter web build"
+      },
+      "outputs": ["{projectRoot}/.next"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter web test"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter web lint"
+      }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter web test:e2e"
+      }
+    }
+  },
+  "tags": []
+}

@@ -1,0 +1,278 @@
+openapi: 3.1.0
+info:
+  title: Book Purchasing API
+  version: 0.1.0
+servers:
+  - url: https://api.example.com
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /books:
+    get:
+      summary: List books
+      operationId: listBooks
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Max items per page
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: Pagination cursor
+      responses:
+        '200':
+          description: A paginated list of books
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookListResponse'
+    post:
+      summary: Create a book
+      operationId: createBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreateRequest'
+      responses:
+        '201':
+          description: Book created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponse'
+        '409':
+          description: Duplicate book title
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /books/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get a book
+      operationId: getBook
+      responses:
+        '200':
+          description: Book found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update a book
+      operationId: updateBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookUpdateRequest'
+      responses:
+        '200':
+          description: Book updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete a book
+      operationId: deleteBook
+      responses:
+        '204':
+          description: Book deleted
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /books/{id}/purchase:
+    post:
+      summary: Purchase a book
+      operationId: purchaseBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        '202':
+          description: Purchase message enqueued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseAcceptedResponse'
+        '400':
+          description: Invalid purchase request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        author:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        stock:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - author
+        - price
+        - currency
+        - stock
+        - created_at
+        - updated_at
+    BookResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Book'
+      required:
+        - data
+    BookListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+        - data
+    BookCreateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        author:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          format: float
+          minimum: 0
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        stock:
+          type: integer
+          minimum: 0
+      required:
+        - title
+        - author
+        - price
+        - currency
+        - stock
+    BookUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/BookCreateRequest'
+    PurchaseRequest:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+        customer_id:
+          type: string
+      required:
+        - quantity
+    PurchaseAcceptedResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+        status:
+          type: string
+          enum: [accepted]
+      required:
+        - message_id
+        - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - error
+        - code
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status

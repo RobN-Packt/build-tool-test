@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/nx.json",
+  "extends": "nx/presets/npm.json",
+  "npmScope": "book-poc",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": []
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["default"]
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": ["default"]
+    }
+  }
+}

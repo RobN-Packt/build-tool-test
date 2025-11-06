@@ -1,0 +1,11 @@
+alias(
+    name = "api",
+    actual = "//apps/api:api",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "tests",
+    actual = "//apps/api:tests",
+    visibility = ["//visibility:public"],
+)
