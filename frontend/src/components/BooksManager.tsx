@@ -30,7 +30,7 @@ export function BooksManager() {
       try {
         setLoading(true);
         const data = await fetchBooks();
-        setBooks(data);
+        setBooks(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load books");
       } finally {
@@ -42,15 +42,22 @@ export function BooksManager() {
   }, []);
 
   const summary = useMemo(() => {
+    if (!Array.isArray(books) || books.length === 0) {
+      return { totalBooks: 0, totalStock: 0, inventoryValue: 0 };
+    }
+
     const totalStock = books.reduce((sum, book) => sum + book.stock, 0);
-    const inventoryValue = books.reduce((sum, book) => sum + book.price * book.stock, 0);
+    const inventoryValue = books.reduce(
+      (sum, book) => sum + book.price * book.stock,
+      0,
+    );
 
     return { totalBooks: books.length, totalStock, inventoryValue };
   }, [books]);
 
   const formatter = useMemo(
     () =>
-      new Intl.NumberFormat(undefined, {
+      new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
         minimumFractionDigits: 2,

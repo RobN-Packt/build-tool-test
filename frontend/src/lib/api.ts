@@ -22,7 +22,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 export async function fetchBooks(): Promise<Book[]> {
   const response = await fetch(`${API_BASE_URL}/books`, { cache: "no-store" });
   const payload = await handleResponse<{ data: Book[] }>(response);
-  return payload.data;
+  return Array.isArray(payload.data) ? payload.data : [];
 }
 
 export async function createBook(values: BookFormValues): Promise<Book> {
