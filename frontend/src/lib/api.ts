@@ -47,14 +47,19 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+type BooksPayload = { books?: Book[]; data?: Book[] };
+
 export async function fetchBooks(): Promise<Book[]> {
   const response = await fetch(`${API_BASE_URL}/books`, { cache: "no-store" });
-  const payload = await handleResponse<{ books?: Book[] }>(response);
-  if (!Array.isArray(payload?.books)) {
-    return [];
-  }
+  const payload = await handleResponse<BooksPayload>(response);
 
-  return payload.books.filter(isBook);
+  const collection = Array.isArray(payload?.books)
+    ? payload.books
+    : Array.isArray(payload?.data)
+      ? payload.data
+      : [];
+
+  return collection.filter(isBook);
 }
 
 export async function createBook(values: BookFormValues): Promise<Book> {

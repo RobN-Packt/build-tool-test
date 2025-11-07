@@ -62,10 +62,11 @@ export function BooksManager() {
     }
 
     const totals = books.reduce(
-      (acc, book) => {
-        acc.totalStock += book.stock;
-        acc.inventoryValue += book.price * book.stock;
-        return acc;
+      (accumulator, book) => {
+        const next = { ...accumulator };
+        next.totalStock += book.stock;
+        next.inventoryValue += book.price * book.stock;
+        return next;
       },
       { totalStock: 0, inventoryValue: 0 },
     );
@@ -88,7 +89,7 @@ export function BooksManager() {
   );
 
   const handleInputChange = (field: keyof BookFormValues, value: string) => {
-    setFormValues((prev) => ({ ...prev, [field]: value }));
+    setFormValues((previous: BookFormValues) => ({ ...previous, [field]: value }));
   };
 
   const resetForm = () => {
@@ -105,12 +106,12 @@ export function BooksManager() {
     try {
       if (editingId) {
         const updated = await updateBook(editingId, formValues);
-          setBooks((prev) =>
-            prev.map((book) => (book.id === editingId ? updated : book)),
-          );
+        setBooks((previous: Book[]) =>
+          previous.map((book) => (book.id === editingId ? updated : book)),
+        );
       } else {
         const created = await createBook(formValues);
-          setBooks((prev) => [created, ...prev]);
+        setBooks((previous: Book[]) => [created, ...previous]);
       }
 
       resetForm();
@@ -138,7 +139,7 @@ export function BooksManager() {
     setError(null);
     try {
       await deleteBook(id);
-      setBooks((prev) => prev.filter((book) => book.id !== id));
+      setBooks((previous: Book[]) => previous.filter((book) => book.id !== id));
 
       if (editingId === id) {
         resetForm();
