@@ -26,6 +26,7 @@ services:
       DB_NAME: bookshop
       DB_SSL_MODE: disable
       HTTP_PORT: "8080"
+      PUBLIC_BASE_URL: http://backend:8080
     depends_on:
       db:
         condition: service_healthy

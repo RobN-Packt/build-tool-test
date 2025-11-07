@@ -4,7 +4,7 @@
 
 This repository contains a full-stack bookshop management platform featuring:
 
-- **GoFr backend (Go 1.22)** providing RESTful CRUD APIs with automatic PostgreSQL migrations and seeded data.
+- **Go backend (Go 1.22)** built with Chi & Huma, automatically generating an OpenAPI 3.1 contract for the book catalogue.
 - **Next.js 16 frontend (TypeScript, App Router)** offering an inventory dashboard to create, read, update, and delete books.
 - **PostgreSQL** for persistent storage, provisioned and orchestrated via Docker Compose.
 - **Comprehensive test coverage** including Go unit/integration tests (with optional Testcontainers) and frontend Jest tests.
@@ -60,18 +60,19 @@ gofmt -w $(find cmd internal tests -name '*.go')
 | `DB_NAME`      | Database name                 | `bookshop`               |
 | `DB_SSL_MODE`  | SSL mode for Postgres         | `disable`                |
 | `HTTP_PORT`    | Exposed API port              | `8080`                   |
+| `PUBLIC_BASE_URL` | Base URL advertised in OpenAPI docs | `http://localhost:8080` |
 
 ### REST Endpoints
 
 `/books`
 
-- `GET /books` – list all books (seeded + user-created)
-- `GET /books/{id}` – retrieve details for a specific book
-- `POST /books` – create a book (`title`, `author`, `isbn`, `price`, `stock`, `description`, `publishedDate`)
-- `PUT /books/{id}` – update a book
-- `DELETE /books/{id}` – remove a book
+- `GET /books` → `200` `{ "books": Book[] }`
+- `GET /books/{id}` → `200` `Book`
+- `POST /books` → `201` `Book`
+- `PUT /books/{id}` → `200` `Book`
+- `DELETE /books/{id}` → `204` *(no content)*
 
-Responses follow JSON conventions and error handling provided by GoFr.
+An OpenAPI 3.1 specification is served at `GET /openapi.json` (and YAML/HTML at `/openapi.yaml` / `/docs`), generated directly from the Huma route definitions.
 
 ## Frontend Development
 

@@ -5,7 +5,7 @@ export type Book = {
   isbn: string;
   price: number;
   stock: number;
-  description: string;
+  description?: string | null;
   publishedDate: string;
   createdAt: string;
   updatedAt: string;

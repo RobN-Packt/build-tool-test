@@ -16,13 +16,22 @@ async function handleResponse<T>(response: Response): Promise<T> {
     throw new Error(message || "Request failed");
   }
 
+  if (response.status === 204 || response.status === 205) {
+    return undefined as unknown as T;
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    return undefined as unknown as T;
+  }
+
   return response.json() as Promise<T>;
 }
 
 export async function fetchBooks(): Promise<Book[]> {
   const response = await fetch(`${API_BASE_URL}/books`, { cache: "no-store" });
-  const payload = await handleResponse<{ data: Book[] }>(response);
-  return Array.isArray(payload.data) ? payload.data : [];
+  const payload = await handleResponse<{ books?: Book[] }>(response);
+  return Array.isArray(payload?.books) ? payload.books : [];
 }
 
 export async function createBook(values: BookFormValues): Promise<Book> {
@@ -53,7 +62,7 @@ export async function deleteBook(id: number): Promise<void> {
     method: "DELETE",
   });
 
-  await handleResponse(response);
+  await handleResponse<undefined>(response);
 }
 
 function toRequestPayload(values: BookFormValues) {

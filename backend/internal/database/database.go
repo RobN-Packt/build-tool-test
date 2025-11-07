@@ -4,11 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq"
-
-	"gofr.dev/pkg/gofr/config"
 )
 
 // Config holds database connection configuration.
@@ -21,15 +20,15 @@ type Config struct {
 	SSLMode  string
 }
 
-// FromGoFr loads the configuration from a GoFr config provider.
-func FromGoFr(cfg config.Config) Config {
+// FromEnv loads database configuration from environment variables.
+func FromEnv() Config {
 	return Config{
-		Host:     cfg.Get("DB_HOST"),
-		Port:     cfg.GetOrDefault("DB_PORT", "5432"),
-		User:     cfg.Get("DB_USER"),
-		Password: cfg.Get("DB_PASSWORD"),
-		Name:     cfg.Get("DB_NAME"),
-		SSLMode:  cfg.GetOrDefault("DB_SSL_MODE", "disable"),
+		Host:     getenvDefault("DB_HOST", "localhost"),
+		Port:     getenvDefault("DB_PORT", "5432"),
+		User:     os.Getenv("DB_USER"),
+		Password: os.Getenv("DB_PASSWORD"),
+		Name:     os.Getenv("DB_NAME"),
+		SSLMode:  getenvDefault("DB_SSL_MODE", "disable"),
 	}
 }
 
@@ -62,4 +61,11 @@ func Connect(ctx context.Context, cfg Config) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func getenvDefault(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
 }

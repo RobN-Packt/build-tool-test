@@ -17,6 +17,21 @@ const initialFormValues: BookFormValues = {
   publishedDate: "",
 };
 
+const formatPublishedDate = (value: string) => {
+  if (!value) {
+    return "—";
+  }
+
+  const isoValue = value.length === 10 ? `${value}T00:00:00Z` : value;
+  const date = new Date(isoValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString();
+};
+
 export function BooksManager() {
   const [books, setBooks] = useState<Book[]>([]);
   const [formValues, setFormValues] = useState<BookFormValues>(initialFormValues);
@@ -285,7 +300,7 @@ export function BooksManager() {
                     <td>{book.isbn}</td>
                     <td>{formatter.format(book.price)}</td>
                     <td>{book.stock}</td>
-                    <td>{new Date(book.publishedDate).toLocaleDateString()}</td>
+                    <td>{formatPublishedDate(book.publishedDate)}</td>
                     <td className={styles.rowActions}>
                       <button type="button" onClick={() => handleEdit(book)}>
                         Edit

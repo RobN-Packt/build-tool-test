@@ -1,125 +1,194 @@
 package books
 
 import (
+	"context"
 	"errors"
-	"strconv"
+	"net/http"
+	"strings"
+	"time"
 
-	"gofr.dev/pkg/gofr"
-	gofrHTTP "gofr.dev/pkg/gofr/http"
+	"github.com/danielgtaylor/huma/v2"
 )
 
-// Handler wires HTTP requests to the books service.
-type Handler struct {
+type handler struct {
 	service Service
 }
 
-// RegisterRoutes binds the books routes to the provided GoFr app.
-func RegisterRoutes(app *gofr.App, service Service) {
-	h := Handler{service: service}
-
-	app.GET("/books", h.list)
-	app.GET("/books/{id}", h.get)
-	app.POST("/books", h.create)
-	app.PUT("/books/{id}", h.update)
-	app.DELETE("/books/{id}", h.delete)
+type bookResource struct {
+	ID            int64   `json:"id" example:"1"`
+	Title         string  `json:"title" example:"Clean Code"`
+	Author        string  `json:"author" example:"Robert C. Martin"`
+	ISBN          string  `json:"isbn" example:"9780132350884"`
+	Price         float64 `json:"price" example:"39.5"`
+	Stock         int     `json:"stock" example:"12"`
+	Description   *string `json:"description,omitempty" example:"Agile software craftsmanship techniques"`
+	PublishedDate string  `json:"publishedDate" format:"date" example:"2008-08-01"`
+	CreatedAt     string  `json:"createdAt" format:"date-time"`
+	UpdatedAt     string  `json:"updatedAt" format:"date-time"`
 }
 
-func (h Handler) list(c *gofr.Context) (interface{}, error) {
-	books, err := h.service.List(c)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]interface{}{"data": books}, nil
+type listBooksResponse struct {
+	Books []bookResource `json:"books"`
 }
 
-func (h Handler) get(c *gofr.Context) (interface{}, error) {
-	id, err := parseID(c.PathParam("id"))
-	if err != nil {
-		return nil, err
-	}
-
-	value := c.PathParam("id")
-
-	book, err := h.service.Get(c, id)
-	if err != nil {
-		return nil, translateError("id", value, err)
-	}
-
-	return book, nil
+type bookOKResponse struct {
+	Body bookResource
 }
 
-func (h Handler) create(c *gofr.Context) (interface{}, error) {
-	var payload CreateBookInput
-
-	if err := c.Bind(&payload); err != nil {
-		return nil, gofrHTTP.ErrorInvalidParam{Params: []string{"body"}}
-	}
-
-	book, err := h.service.Create(c, payload)
-	if err != nil {
-		return nil, translateError("body", "", err)
-	}
-
-	return book, nil
+type listBooksOKResponse struct {
+	Body listBooksResponse
 }
 
-func (h Handler) update(c *gofr.Context) (interface{}, error) {
-	id, err := parseID(c.PathParam("id"))
-	if err != nil {
-		return nil, err
-	}
-
-	var payload UpdateBookInput
-	if err := c.Bind(&payload); err != nil {
-		return nil, gofrHTTP.ErrorInvalidParam{Params: []string{"body"}}
-	}
-
-	value := c.PathParam("id")
-
-	book, err := h.service.Update(c, id, payload)
-	if err != nil {
-		return nil, translateError("id", value, err)
-	}
-
-	return book, nil
+type deleteBookResponse struct {
+	Status int
 }
 
-func (h Handler) delete(c *gofr.Context) (interface{}, error) {
-	id, err := parseID(c.PathParam("id"))
+// RegisterRoutes binds the books routes to the provided Huma API.
+func RegisterRoutes(api huma.API, service Service) {
+	h := handler{service: service}
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "list-books",
+		Method:        http.MethodGet,
+		Path:          "/books",
+		Summary:       "List books",
+		Description:   "Retrieve the catalog of books that are currently in stock.",
+		Tags:          []string{"Books"},
+		DefaultStatus: http.StatusOK,
+	}, h.list)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "get-book",
+		Method:      http.MethodGet,
+		Path:        "/books/{id}",
+		Summary:     "Get book",
+		Tags:        []string{"Books"},
+	}, h.get)
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "create-book",
+		Method:        http.MethodPost,
+		Path:          "/books",
+		Summary:       "Create book",
+		Tags:          []string{"Books"},
+		DefaultStatus: http.StatusCreated,
+	}, h.create)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "update-book",
+		Method:      http.MethodPut,
+		Path:        "/books/{id}",
+		Summary:     "Update book",
+		Tags:        []string{"Books"},
+	}, h.update)
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "delete-book",
+		Method:        http.MethodDelete,
+		Path:          "/books/{id}",
+		Summary:       "Delete book",
+		Tags:          []string{"Books"},
+		DefaultStatus: http.StatusNoContent,
+	}, h.delete)
+}
+
+func (h handler) list(ctx context.Context, _ *struct{}) (*listBooksOKResponse, error) {
+	items, err := h.service.List(ctx)
 	if err != nil {
-		return nil, err
+		return nil, huma.Error500InternalServerError("failed to list books", err)
 	}
 
-	value := c.PathParam("id")
-
-	if err := h.service.Delete(c, id); err != nil {
-		return nil, translateError("id", value, err)
-	}
-
-	return map[string]string{"message": "book deleted"}, nil
+	return &listBooksOKResponse{
+		Body: listBooksResponse{Books: mapBooks(items)},
+	}, nil
 }
 
-func parseID(raw string) (int64, error) {
-	id, err := strconv.ParseInt(raw, 10, 64)
-	if err != nil || id <= 0 {
-		return 0, gofrHTTP.ErrorInvalidParam{Params: []string{"id"}}
+func (h handler) get(ctx context.Context, input *struct {
+	ID int64 `path:"id" example:"1"`
+}) (*bookOKResponse, error) {
+	book, err := h.service.Get(ctx, input.ID)
+	if err != nil {
+		return nil, mapError(err)
 	}
 
-	return id, nil
+	return &bookOKResponse{Body: mapBook(book)}, nil
 }
 
-func translateError(field, value string, err error) error {
-	switch err {
-	case ErrBookNotFound:
-		return gofrHTTP.ErrorEntityNotFound{Name: field, Value: value}
-	case ErrDuplicateBook:
-		return gofrHTTP.ErrorEntityAlreadyExist{}
+func (h handler) create(ctx context.Context, input *struct {
+	Body CreateBookInput
+}) (*bookOKResponse, error) {
+	book, err := h.service.Create(ctx, input.Body)
+	if err != nil {
+		return nil, mapError(err)
 	}
 
-	if errors.Is(err, ErrInvalidInput) || errors.Is(err, ErrInvalidPublishedDate) {
-		return gofrHTTP.ErrorInvalidParam{Params: []string{field}}
+	return &bookOKResponse{
+		Body: mapBook(book),
+	}, nil
+}
+
+func (h handler) update(ctx context.Context, input *struct {
+	ID   int64 `path:"id" example:"1"`
+	Body UpdateBookInput
+}) (*bookOKResponse, error) {
+	book, err := h.service.Update(ctx, input.ID, input.Body)
+	if err != nil {
+		return nil, mapError(err)
 	}
 
-	return err
+	return &bookOKResponse{Body: mapBook(book)}, nil
+}
+
+func (h handler) delete(ctx context.Context, input *struct {
+	ID int64 `path:"id" example:"1"`
+}) (*deleteBookResponse, error) {
+	if err := h.service.Delete(ctx, input.ID); err != nil {
+		return nil, mapError(err)
+	}
+
+	return &deleteBookResponse{Status: http.StatusNoContent}, nil
+}
+
+func mapBooks(items []Book) []bookResource {
+	books := make([]bookResource, len(items))
+	for i, item := range items {
+		books[i] = mapBook(item)
+	}
+	return books
+}
+
+func mapBook(book Book) bookResource {
+	var description *string
+	trimmed := strings.TrimSpace(book.Description)
+	if trimmed != "" {
+		description = &trimmed
+	}
+
+	return bookResource{
+		ID:            book.ID,
+		Title:         book.Title,
+		Author:        book.Author,
+		ISBN:          book.ISBN,
+		Price:         book.Price,
+		Stock:         book.Stock,
+		Description:   description,
+		PublishedDate: book.PublishedDate.Format("2006-01-02"),
+		CreatedAt:     book.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:     book.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+func mapError(err error) error {
+	switch {
+	case errors.Is(err, ErrBookNotFound):
+		return huma.Error404NotFound("book not found", err)
+	case errors.Is(err, ErrDuplicateBook):
+		return huma.Error409Conflict("book already exists", err)
+	case errors.Is(err, ErrInvalidInput):
+		return huma.Error400BadRequest("invalid book payload", err)
+	case errors.Is(err, ErrInvalidPublishedDate):
+		return huma.Error400BadRequest("invalid published date", err)
+	default:
+		return huma.Error500InternalServerError("unexpected error", err)
+	}
 }

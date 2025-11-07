@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
-	"gofr.dev/pkg/gofr"
-
+	"github.com/danielgtaylor/huma/v2"
+	humachi "github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/docker/docker/client"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/require"
 	tc "github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -49,17 +49,6 @@ func TestBooksCRUD(t *testing.T) {
 	}
 
 	httpPort := freePort(t)
-	previousHTTPPort := os.Getenv("HTTP_PORT")
-	require.NoError(t, os.Setenv("HTTP_PORT", fmt.Sprintf("%d", httpPort)))
-	defer func() {
-		if previousHTTPPort == "" {
-			require.NoError(t, os.Unsetenv("HTTP_PORT"))
-		} else {
-			require.NoError(t, os.Setenv("HTTP_PORT", previousHTTPPort))
-		}
-	}()
-
-	app := gofr.New()
 
 	db, err := database.Connect(ctx, dbCfg)
 	require.NoError(t, err)
@@ -69,27 +58,63 @@ func TestBooksCRUD(t *testing.T) {
 
 	repo := books.NewRepository(db)
 	service := books.NewService(repo)
-	books.RegisterRoutes(app, service)
 
-	go app.Run()
+	router := chi.NewRouter()
+	router.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	api := humachi.New(router, huma.Config{
+		OpenAPI: &huma.OpenAPI{
+			OpenAPI: "3.1.0",
+			Info: &huma.Info{
+				Title:   "Bookshop API",
+				Version: "test",
+			},
+		},
+	})
+
+	books.RegisterRoutes(api, service)
+
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", httpPort),
+		Handler: router,
+	}
+
+	go func() {
+		_ = server.ListenAndServe()
+	}()
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		require.NoError(t, app.Shutdown(shutdownCtx))
+		_ = server.Shutdown(shutdownCtx)
 	}()
 
 	baseURL := fmt.Sprintf("http://localhost:%d", httpPort)
-	waitForServer(t, baseURL+"/.well-known/health")
+	waitForServer(t, baseURL+"/healthz")
 
 	// List seeded books
 	resp := doRequest(t, http.MethodGet, baseURL+"/books", nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
+	type bookResponse struct {
+		ID            int64   `json:"id"`
+		Title         string  `json:"title"`
+		Author        string  `json:"author"`
+		ISBN          string  `json:"isbn"`
+		Price         float64 `json:"price"`
+		Stock         int     `json:"stock"`
+		Description   *string `json:"description"`
+		PublishedDate string  `json:"publishedDate"`
+		CreatedAt     string  `json:"createdAt"`
+		UpdatedAt     string  `json:"updatedAt"`
+	}
+
 	var list struct {
-		Data []books.Book `json:"data"`
+		Books []bookResponse `json:"books"`
 	}
 	decodeResponse(t, resp, &list)
-	require.GreaterOrEqual(t, len(list.Data), 5)
+	require.GreaterOrEqual(t, len(list.Books), 5)
 
 	// Create a new book
 	createBody := books.CreateBookInput{
@@ -103,9 +128,9 @@ func TestBooksCRUD(t *testing.T) {
 	}
 
 	resp = doRequest(t, http.MethodPost, baseURL+"/books", createBody)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
 
-	var created books.Book
+	var created bookResponse
 	decodeResponse(t, resp, &created)
 	require.NotZero(t, created.ID)
 	require.Equal(t, createBody.Title, created.Title)
@@ -124,14 +149,14 @@ func TestBooksCRUD(t *testing.T) {
 	resp = doRequest(t, http.MethodPut, fmt.Sprintf("%s/books/%d", baseURL, created.ID), updateBody)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	var updated books.Book
+	var updated bookResponse
 	decodeResponse(t, resp, &updated)
 	require.Equal(t, updateBody.Title, updated.Title)
 	require.Equal(t, updateBody.Price, updated.Price)
 
 	// Delete the book
 	resp = doRequest(t, http.MethodDelete, fmt.Sprintf("%s/books/%d", baseURL, created.ID), nil)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 	resp.Body.Close()
 }
 
