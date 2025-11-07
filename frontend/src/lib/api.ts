@@ -2,6 +2,25 @@ import { Book, BookFormValues } from "@/types/book";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+const isBook = (value: unknown): value is Book => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<Book>;
+  return (
+    typeof candidate.id === "number" &&
+    typeof candidate.title === "string" &&
+    typeof candidate.author === "string" &&
+    typeof candidate.isbn === "string" &&
+    typeof candidate.price === "number" &&
+    typeof candidate.stock === "number" &&
+    typeof candidate.publishedDate === "string" &&
+    typeof candidate.createdAt === "string" &&
+    typeof candidate.updatedAt === "string"
+  );
+};
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = response.statusText;
@@ -31,7 +50,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
 export async function fetchBooks(): Promise<Book[]> {
   const response = await fetch(`${API_BASE_URL}/books`, { cache: "no-store" });
   const payload = await handleResponse<{ books?: Book[] }>(response);
-  return Array.isArray(payload?.books) ? payload.books : [];
+  if (!Array.isArray(payload?.books)) {
+    return [];
+  }
+
+  return payload.books.filter(isBook);
 }
 
 export async function createBook(values: BookFormValues): Promise<Book> {

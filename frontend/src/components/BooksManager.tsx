@@ -36,16 +36,16 @@ export function BooksManager() {
   const [books, setBooks] = useState<Book[]>([]);
   const [formValues, setFormValues] = useState<BookFormValues>(initialFormValues);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
-        const data = await fetchBooks();
-        setBooks(Array.isArray(data) ? data : []);
+          const data = await fetchBooks();
+          setBooks(Array.isArray(data) ? data.filter((book): book is Book => Boolean(book)) : []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load books");
       } finally {
@@ -61,13 +61,20 @@ export function BooksManager() {
       return { totalBooks: 0, totalStock: 0, inventoryValue: 0 };
     }
 
-    const totalStock = books.reduce((sum, book) => sum + book.stock, 0);
-    const inventoryValue = books.reduce(
-      (sum, book) => sum + book.price * book.stock,
-      0,
+    const totals = books.reduce(
+      (acc, book) => {
+        acc.totalStock += book.stock;
+        acc.inventoryValue += book.price * book.stock;
+        return acc;
+      },
+      { totalStock: 0, inventoryValue: 0 },
     );
 
-    return { totalBooks: books.length, totalStock, inventoryValue };
+    return {
+      totalBooks: books.length,
+      totalStock: totals.totalStock,
+      inventoryValue: totals.inventoryValue,
+    };
   }, [books]);
 
   const formatter = useMemo(
@@ -98,10 +105,12 @@ export function BooksManager() {
     try {
       if (editingId) {
         const updated = await updateBook(editingId, formValues);
-        setBooks((prev) => prev.map((book) => (book.id === editingId ? updated : book)));
+          setBooks((prev) =>
+            prev.map((book) => (book.id === editingId ? updated : book)),
+          );
       } else {
         const created = await createBook(formValues);
-        setBooks((prev) => [created, ...prev]);
+          setBooks((prev) => [created, ...prev]);
       }
 
       resetForm();
