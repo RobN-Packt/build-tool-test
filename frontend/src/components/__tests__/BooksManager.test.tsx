@@ -47,7 +47,22 @@ describe("BooksManager", () => {
   });
 
   it("submits create book form", async () => {
-    api.fetchBooks.mockResolvedValue([]);
+    api.fetchBooks
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 2,
+          title: "New Book",
+          author: "Jane Doe",
+          isbn: "9991112223334",
+          price: 25,
+          stock: 5,
+          description: "",
+          publishedDate: "2024-05-01T00:00:00Z",
+          createdAt: "2024-05-01T00:00:00Z",
+          updatedAt: "2024-05-01T00:00:00Z",
+        },
+      ]);
     api.createBook.mockImplementation(async () => ({
       id: 2,
       title: "New Book",

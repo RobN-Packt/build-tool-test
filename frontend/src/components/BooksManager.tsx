@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { createBook, deleteBook, fetchBooks, updateBook } from "@/lib/api";
 import { Book, BookFormValues } from "@/types/book";
@@ -40,21 +40,22 @@ export function BooksManager() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-          const data = await fetchBooks();
-          setBooks(Array.isArray(data) ? data.filter((book): book is Book => Boolean(book)) : []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load books");
-      } finally {
-        setLoading(false);
-      }
+  const loadBooks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchBooks();
+      setBooks(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load books");
+    } finally {
+      setLoading(false);
     }
-
-    load();
   }, []);
+
+  useEffect(() => {
+    loadBooks();
+  }, [loadBooks]);
 
   const summary = useMemo(() => {
     if (!Array.isArray(books) || books.length === 0) {
@@ -105,15 +106,12 @@ export function BooksManager() {
 
     try {
       if (editingId) {
-        const updated = await updateBook(editingId, formValues);
-        setBooks((previous: Book[]) =>
-          previous.map((book) => (book.id === editingId ? updated : book)),
-        );
+        await updateBook(editingId, formValues);
       } else {
-        const created = await createBook(formValues);
-        setBooks((previous: Book[]) => [created, ...previous]);
+        await createBook(formValues);
       }
 
+      await loadBooks();
       resetForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save book");
@@ -139,7 +137,7 @@ export function BooksManager() {
     setError(null);
     try {
       await deleteBook(id);
-      setBooks((previous: Book[]) => previous.filter((book) => book.id !== id));
+      await loadBooks();
 
       if (editingId === id) {
         resetForm();
@@ -285,7 +283,7 @@ export function BooksManager() {
             <p>{loading ? "Refreshing inventory..." : `${books.length} books available`}</p>
           </header>
 
-          {loading ? (
+            {loading ? (
             <p className={styles.placeholder}>Loading books...</p>
           ) : books.length === 0 ? (
             <p className={styles.placeholder}>No books found. Add your first entry!</p>
