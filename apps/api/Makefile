@@ -1,8 +1,9 @@
 GO ?= go
 DB_DSN ?= postgres://postgres:postgres@localhost:5432/bookapi?sslmode=disable
 BIN_DIR ?= bin
+COMPOSE ?= docker compose
 
-.PHONY: dev migrate test build
+.PHONY: dev migrate test build db-up db-down
 
 dev:
 	@DB_DSN=$(DB_DSN) PORT=$${PORT:-8080} $(GO) run ./cmd/api
@@ -16,4 +17,10 @@ test:
 build:
 	@mkdir -p $(BIN_DIR)
 	@DB_DSN=$(DB_DSN) $(GO) build -o $(BIN_DIR)/api ./cmd/api
+
+db-up:
+	@$(COMPOSE) up -d db
+
+db-down:
+	@$(COMPOSE) down
 

@@ -18,6 +18,7 @@ cp .env.example .env
 ## Run the API
 
 ```bash
+make db-up   # starts local Postgres via docker compose (optional but recommended)
 make dev
 ```
 
@@ -56,4 +57,12 @@ The compiled binary is written to `bin/api`.
 docker build -t book-api .
 docker run --rm -p 8080:8080 -e DB_DSN="postgres://..." book-api
 ```
+
+## Cleanup
+
+```bash
+make db-down
+```
+
+Stops the compose stack and removes the containers.
 
