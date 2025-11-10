@@ -1,0 +1,13 @@
+{
+  "name": "book-shop-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "codegen": "pnpm tsx scripts/codegen.ts",
+    "test:web": "pnpm --filter web test"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.0",
+    "tsx": "^4.16.5"
+  }
+}
