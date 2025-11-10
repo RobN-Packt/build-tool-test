@@ -1,0 +1,7 @@
+node_modules/
+apps/web/node_modules/
+.pnpm-store/
+.DS_Store
+.env
+.env.local
+*.log

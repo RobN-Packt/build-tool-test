@@ -13,13 +13,14 @@ Minimal Next.js app for managing books via the Book API.
 cd apps/web
 cp .env.example .env.local
 # adjust NEXT_PUBLIC_API_BASE_URL if the API runs elsewhere
-npm install
+(cd ../.. && pnpm install)
 ```
 
 ## Development
 
 ```bash
-npm run dev
+# from repository root
+pnpm --filter book-web dev
 ```
 
 Visit http://localhost:3000 for the UI:
@@ -29,7 +30,8 @@ Visit http://localhost:3000 for the UI:
 ## Testing
 
 ```bash
-npm test
+# from repository root
+pnpm --filter book-web test
 ```
 
 Runs Vitest with React Testing Library.
@@ -37,8 +39,9 @@ Runs Vitest with React Testing Library.
 ## Build
 
 ```bash
-npm run build
-npm run start
+# from repository root
+pnpm --filter book-web build
+pnpm --filter book-web start
 ```
 
 ## Docker
@@ -54,7 +57,7 @@ The frontend consumes types generated from the OpenAPI spec. After updating
 `apps/api/openapi/openapi.yaml`, run:
 
 ```bash
-pnpm codegen
+pnpm run codegen
 ```
 
 This refreshes `lib/api/types.ts` and keeps the client in sync with the API.

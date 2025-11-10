@@ -1,5 +1,5 @@
 GO ?= go
-DB_DSN ?= postgres://postgres:postgres@localhost:5432/bookapi?sslmode=disable
+DB_DSN ?= postgres://postgres:postgres@localhost:5432/books?sslmode=disable
 BIN_DIR ?= bin
 COMPOSE ?= docker compose
 
@@ -19,7 +19,7 @@ build:
 	@DB_DSN=$(DB_DSN) $(GO) build -o $(BIN_DIR)/api ./cmd/api
 
 db-up:
-	@$(COMPOSE) up -d db
+	@$(COMPOSE) up -d postgres
 
 db-down:
 	@$(COMPOSE) down

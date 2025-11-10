@@ -12,36 +12,24 @@ Minimal CRUD API for managing books using [Huma v2](https://huma.rocks/) and Pos
 
 ```bash
 cp .env.example .env
-# adjust DB_DSN if needed
+# adjust DB_DSN if needed (defaults to books database)
 ```
 
-## Run the API
+## Running Locally
 
-```bash
-make db-up   # starts local Postgres via docker compose (optional but recommended)
-make dev
-```
+- Apply migrations: `make migrate`
+- Start the API server: `make dev`
 
 The server listens on `:$PORT` (defaults to `8080`). OpenAPI docs are available at `/openapi.json`. Health check: `/healthz`.
 
-## Migrations
-
-```bash
-make migrate
-```
-
-This applies embedded SQL migrations to the database specified by `DB_DSN`.
-
 ## Testing
 
-- Unit and integration tests:
+```bash
+# Set TEST_DB_DSN to point at a disposable database before running.
+TEST_DB_DSN="postgres://postgres:postgres@localhost:5432/books_test?sslmode=disable" make test
+```
 
-  ```bash
-  # Set TEST_DB_DSN to point at a disposable database before running.
-  TEST_DB_DSN="postgres://postgres:postgres@localhost:5432/bookapi_test?sslmode=disable" make test
-  ```
-
-  The integration test truncates the `books` table after running.
+The integration test truncates the `books` table after running.
 
 ## Build
 
@@ -54,28 +42,19 @@ The compiled binary is written to `bin/api`.
 ## Docker
 
 ```bash
-docker build -t book-api .
+docker build -t book-api apps/api
 docker run --rm -p 8080:8080 -e DB_DSN="postgres://..." book-api
 ```
 
 ## Code Generation
 
 OpenAPI definitions live in `apps/api/openapi/openapi.yaml`. After editing the
-spec, regenerate Go and TypeScript models:
+spec, regenerate Go and TypeScript models from the repository root:
 
 ```bash
-pnpm codegen
+pnpm run codegen
 ```
 
 This updates:
 - `apps/api/openapi/gen.models.go`
 - `apps/web/lib/api/types.ts`
-
-## Cleanup
-
-```bash
-make db-down
-```
-
-Stops the compose stack and removes the containers.
-
