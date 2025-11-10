@@ -24,7 +24,13 @@ func TestBookCRUDIntegration(t *testing.T) {
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, dsn)
-	require.NoError(t, err)
+	if err != nil {
+		t.Skipf("unable to create pool for TEST_DB_DSN: %v", err)
+	}
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		t.Skipf("unable to connect to TEST_DB_DSN: %v", err)
+	}
 	defer pool.Close()
 
 	require.NoError(t, applyMigrations(ctx, pool))
