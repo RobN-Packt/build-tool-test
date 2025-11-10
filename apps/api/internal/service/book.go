@@ -40,16 +40,24 @@ func NewBookService(repo BookRepository) *BookService {
 	}
 }
 
-type BookInput struct {
-	Title    string  `json:"title"`
-	Author   string  `json:"author"`
-	Price    float64 `json:"price"`
-	Currency string  `json:"currency"`
-	Stock    int     `json:"stock"`
+type BookCreateInput struct {
+	Title    string
+	Author   string
+	Price    float64
+	Currency string
+	Stock    int
 }
 
-func (s *BookService) CreateBook(ctx context.Context, input BookInput) (domain.Book, error) {
-	if err := validateBookInput(input); err != nil {
+type BookUpdateInput struct {
+	Title    *string
+	Author   *string
+	Price    *float64
+	Currency *string
+	Stock    *int
+}
+
+func (s *BookService) CreateBook(ctx context.Context, input BookCreateInput) (domain.Book, error) {
+	if err := validateBookCreateInput(input); err != nil {
 		return domain.Book{}, err
 	}
 
@@ -79,8 +87,8 @@ func (s *BookService) ListBooks(ctx context.Context) ([]domain.Book, error) {
 	return s.repo.List(ctx)
 }
 
-func (s *BookService) UpdateBook(ctx context.Context, id uuid.UUID, input BookInput) (domain.Book, error) {
-	if err := validateBookInput(input); err != nil {
+func (s *BookService) UpdateBook(ctx context.Context, id uuid.UUID, input BookUpdateInput) (domain.Book, error) {
+	if err := validateBookUpdateInput(input); err != nil {
 		return domain.Book{}, err
 	}
 
@@ -89,11 +97,21 @@ func (s *BookService) UpdateBook(ctx context.Context, id uuid.UUID, input BookIn
 		return domain.Book{}, err
 	}
 
-	existing.Title = strings.TrimSpace(input.Title)
-	existing.Author = strings.TrimSpace(input.Author)
-	existing.Price = input.Price
-	existing.Currency = normalizeCurrency(input.Currency)
-	existing.Stock = input.Stock
+	if input.Title != nil {
+		existing.Title = strings.TrimSpace(*input.Title)
+	}
+	if input.Author != nil {
+		existing.Author = strings.TrimSpace(*input.Author)
+	}
+	if input.Price != nil {
+		existing.Price = *input.Price
+	}
+	if input.Currency != nil {
+		existing.Currency = normalizeCurrency(*input.Currency)
+	}
+	if input.Stock != nil {
+		existing.Stock = *input.Stock
+	}
 	existing.UpdatedAt = s.now().UTC()
 
 	if err := s.repo.Update(ctx, existing); err != nil {
@@ -114,7 +132,7 @@ func normalizeCurrency(curr string) string {
 	return strings.ToUpper(curr)
 }
 
-func validateBookInput(input BookInput) error {
+func validateBookCreateInput(input BookCreateInput) error {
 	errors := make(map[string]string)
 
 	title := strings.TrimSpace(input.Title)
@@ -141,6 +159,52 @@ func validateBookInput(input BookInput) error {
 	}
 
 	if input.Stock < 0 {
+		errors["stock"] = "must be >= 0"
+	}
+
+	if len(errors) > 0 {
+		return ValidationError{Fields: errors}
+	}
+	return nil
+}
+
+func validateBookUpdateInput(input BookUpdateInput) error {
+	errors := make(map[string]string)
+	if input.Title == nil && input.Author == nil && input.Price == nil && input.Currency == nil && input.Stock == nil {
+		errors["body"] = "must include at least one field"
+		return ValidationError{Fields: errors}
+	}
+
+	if input.Title != nil {
+		value := strings.TrimSpace(*input.Title)
+		if value == "" {
+			errors["title"] = "cannot be empty"
+		} else if !withinLength(value, 1, 200) {
+			errors["title"] = "must be 1-200 characters"
+		}
+	}
+
+	if input.Author != nil {
+		value := strings.TrimSpace(*input.Author)
+		if value == "" {
+			errors["author"] = "cannot be empty"
+		} else if !withinLength(value, 1, 200) {
+			errors["author"] = "must be 1-200 characters"
+		}
+	}
+
+	if input.Price != nil && *input.Price < 0 {
+		errors["price"] = "must be >= 0"
+	}
+
+	if input.Currency != nil {
+		value := normalizeCurrency(*input.Currency)
+		if len(value) != 3 || strings.ToUpper(value) != value {
+			errors["currency"] = "must be ISO 4217 code"
+		}
+	}
+
+	if input.Stock != nil && *input.Stock < 0 {
 		errors["stock"] = "must be >= 0"
 	}
 

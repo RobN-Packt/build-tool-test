@@ -18,7 +18,7 @@ func TestBookServiceCreate_Success(t *testing.T) {
 	now := time.Date(2025, 11, 10, 12, 0, 0, 0, time.UTC)
 	svc.now = func() time.Time { return now }
 
-	input := BookInput{
+	input := BookCreateInput{
 		Title:    "  The Go Programming Language ",
 		Author:   "Alan Donovan",
 		Price:    49.99,
@@ -44,7 +44,7 @@ func TestBookServiceCreate_ValidationError(t *testing.T) {
 	mockRepo := newMockBookRepo()
 	svc := NewBookService(mockRepo)
 
-	_, err := svc.CreateBook(context.Background(), BookInput{
+	_, err := svc.CreateBook(context.Background(), BookCreateInput{
 		Price:    -1,
 		Currency: "US",
 		Stock:    -5,
@@ -58,6 +58,51 @@ func TestBookServiceCreate_ValidationError(t *testing.T) {
 	require.Contains(t, validationErr.Fields, "price")
 	require.Contains(t, validationErr.Fields, "currency")
 	require.Contains(t, validationErr.Fields, "stock")
+}
+
+func TestBookServiceUpdate_PartialSuccess(t *testing.T) {
+	mockRepo := newMockBookRepo()
+	svc := NewBookService(mockRepo)
+	now := time.Date(2025, 11, 10, 12, 0, 0, 0, time.UTC)
+	svc.now = func() time.Time { return now }
+
+	existing := domain.Book{
+		ID:        uuid.New(),
+		Title:     "Original",
+		Author:    "Author",
+		Price:     10,
+		Currency:  "USD",
+		Stock:     5,
+		CreatedAt: now.Add(-time.Hour),
+		UpdatedAt: now.Add(-time.Hour),
+	}
+	mockRepo.store[existing.ID] = existing
+
+	newTitle := "Updated Title"
+	newPrice := 12.5
+	input := BookUpdateInput{
+		Title: &newTitle,
+		Price: &newPrice,
+	}
+
+	updated, err := svc.UpdateBook(context.Background(), existing.ID, input)
+	require.NoError(t, err)
+	require.Equal(t, newTitle, updated.Title)
+	require.Equal(t, newPrice, updated.Price)
+	require.Equal(t, existing.Author, updated.Author)
+	require.True(t, updated.UpdatedAt.After(existing.UpdatedAt))
+}
+
+func TestBookServiceUpdate_MissingBody(t *testing.T) {
+	mockRepo := newMockBookRepo()
+	svc := NewBookService(mockRepo)
+	bookID := uuid.New()
+	mockRepo.store[bookID] = domain.Book{ID: bookID}
+
+	_, err := svc.UpdateBook(context.Background(), bookID, BookUpdateInput{})
+	require.Error(t, err)
+	_, ok := err.(ValidationError)
+	require.True(t, ok)
 }
 
 type mockBookRepo struct {

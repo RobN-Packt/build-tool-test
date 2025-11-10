@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/example/bookapi/internal/domain"
 	"github.com/example/bookapi/internal/repo"
 	"github.com/example/bookapi/internal/service"
+	"github.com/example/bookapi/openapi"
 )
 
 type BookHandler struct {
@@ -22,54 +23,35 @@ func NewBookHandler(service *service.BookService) *BookHandler {
 	return &BookHandler{service: service}
 }
 
-type BookPayload struct {
-	Title    string  `json:"title" example:"The Go Programming Language"`
-	Author   string  `json:"author" example:"Alan A. A. Donovan"`
-	Price    float64 `json:"price" example:"49.99"`
-	Currency string  `json:"currency" example:"USD"`
-	Stock    int     `json:"stock" example:"10"`
-}
-
-type BookResponse struct {
-	ID        uuid.UUID `json:"id"`
-	Title     string    `json:"title"`
-	Author    string    `json:"author"`
-	Price     float64   `json:"price"`
-	Currency  string    `json:"currency"`
-	Stock     int       `json:"stock"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
 type BookIDInput struct {
 	ID uuid.UUID `path:"id"`
 }
 
 type CreateBookInput struct {
-	Body BookPayload `body:""`
+	Body openapi.BookCreate `body:""`
 }
 
 type CreateBookOutput struct {
-	Body BookResponse
+	Body openapi.Book
 }
 
 type GetBookOutput struct {
-	Body BookResponse
+	Body openapi.Book
 }
 
 type ListBooksOutput struct {
 	Body struct {
-		Books []BookResponse `json:"books"`
+		Books []openapi.Book `json:"books"`
 	}
 }
 
 type UpdateBookInput struct {
-	ID   uuid.UUID   `path:"id"`
-	Body BookPayload `body:""`
+	ID   uuid.UUID          `path:"id"`
+	Body openapi.BookUpdate `body:""`
 }
 
 type UpdateBookOutput struct {
-	Body BookResponse
+	Body openapi.Book
 }
 
 func RegisterBookRoutes(api huma.API, handler *BookHandler) {
@@ -120,9 +102,9 @@ func (h *BookHandler) listBooks(ctx context.Context, _ *struct{}) (*ListBooksOut
 		return nil, huma.NewError(http.StatusInternalServerError, err.Error())
 	}
 
-	result := make([]BookResponse, 0, len(books))
+	result := make([]openapi.Book, 0, len(books))
 	for _, b := range books {
-		result = append(result, toBookResponse(b))
+		result = append(result, toOpenAPIBook(b))
 	}
 
 	output := &ListBooksOutput{}
@@ -139,17 +121,11 @@ func (h *BookHandler) getBook(ctx context.Context, input *BookIDInput) (*GetBook
 		return nil, huma.NewError(http.StatusInternalServerError, err.Error())
 	}
 
-	return &GetBookOutput{Body: toBookResponse(book)}, nil
+	return &GetBookOutput{Body: toOpenAPIBook(book)}, nil
 }
 
 func (h *BookHandler) createBook(ctx context.Context, input *CreateBookInput) (*CreateBookOutput, error) {
-	book, err := h.service.CreateBook(ctx, service.BookInput{
-		Title:    input.Body.Title,
-		Author:   input.Body.Author,
-		Price:    input.Body.Price,
-		Currency: input.Body.Currency,
-		Stock:    input.Body.Stock,
-	})
+	book, err := h.service.CreateBook(ctx, toServiceCreateInput(input.Body))
 	if err != nil {
 		switch e := err.(type) {
 		case service.ValidationError:
@@ -159,18 +135,12 @@ func (h *BookHandler) createBook(ctx context.Context, input *CreateBookInput) (*
 		}
 	}
 
-	output := &CreateBookOutput{Body: toBookResponse(book)}
+	output := &CreateBookOutput{Body: toOpenAPIBook(book)}
 	return output, nil
 }
 
 func (h *BookHandler) updateBook(ctx context.Context, input *UpdateBookInput) (*UpdateBookOutput, error) {
-	book, err := h.service.UpdateBook(ctx, input.ID, service.BookInput{
-		Title:    input.Body.Title,
-		Author:   input.Body.Author,
-		Price:    input.Body.Price,
-		Currency: input.Body.Currency,
-		Stock:    input.Body.Stock,
-	})
+	book, err := h.service.UpdateBook(ctx, input.ID, toServiceUpdateInput(input.Body))
 	if err != nil {
 		switch e := err.(type) {
 		case service.ValidationError:
@@ -182,7 +152,7 @@ func (h *BookHandler) updateBook(ctx context.Context, input *UpdateBookInput) (*
 			return nil, huma.NewError(http.StatusInternalServerError, err.Error())
 		}
 	}
-	return &UpdateBookOutput{Body: toBookResponse(book)}, nil
+	return &UpdateBookOutput{Body: toOpenAPIBook(book)}, nil
 }
 
 func (h *BookHandler) deleteBook(ctx context.Context, input *BookIDInput) (*struct{}, error) {
@@ -196,15 +166,50 @@ func (h *BookHandler) deleteBook(ctx context.Context, input *BookIDInput) (*stru
 	return nil, nil
 }
 
-func toBookResponse(book domain.Book) BookResponse {
-	return BookResponse{
-		ID:        book.ID,
+func toOpenAPIBook(book domain.Book) openapi.Book {
+	return openapi.Book{
+		Id:        openapi_types.UUID(book.ID),
 		Title:     book.Title,
 		Author:    book.Author,
-		Price:     book.Price,
+		Price:     float32(book.Price),
 		Currency:  book.Currency,
 		Stock:     book.Stock,
 		CreatedAt: book.CreatedAt,
 		UpdatedAt: book.UpdatedAt,
 	}
+}
+
+func toServiceCreateInput(body openapi.BookCreate) service.BookCreateInput {
+	return service.BookCreateInput{
+		Title:    body.Title,
+		Author:   body.Author,
+		Price:    float64(body.Price),
+		Currency: body.Currency,
+		Stock:    body.Stock,
+	}
+}
+
+func toServiceUpdateInput(body openapi.BookUpdate) service.BookUpdateInput {
+	var result service.BookUpdateInput
+	if body.Title != nil {
+		value := *body.Title
+		result.Title = &value
+	}
+	if body.Author != nil {
+		value := *body.Author
+		result.Author = &value
+	}
+	if body.Price != nil {
+		value := float64(*body.Price)
+		result.Price = &value
+	}
+	if body.Currency != nil {
+		value := *body.Currency
+		result.Currency = &value
+	}
+	if body.Stock != nil {
+		value := *body.Stock
+		result.Stock = &value
+	}
+	return result
 }

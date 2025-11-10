@@ -58,6 +58,19 @@ docker build -t book-api .
 docker run --rm -p 8080:8080 -e DB_DSN="postgres://..." book-api
 ```
 
+## Code Generation
+
+OpenAPI definitions live in `apps/api/openapi/openapi.yaml`. After editing the
+spec, regenerate Go and TypeScript models:
+
+```bash
+pnpm codegen
+```
+
+This updates:
+- `apps/api/openapi/gen.models.go`
+- `apps/web/lib/api/types.ts`
+
 ## Cleanup
 
 ```bash
