@@ -1,22 +1,50 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBook, type BookCreate } from '@/lib/api';
+import { createBook, updateBook, type Book, type BookCreate, type BookUpdate } from '@/lib/api';
 
-const defaultForm = {
-  title: '',
-  author: '',
-  price: '',
-  currency: 'USD',
-  stock: ''
-};
+type Mode = 'create' | 'edit';
 
-export function NewBookForm() {
+interface BookFormProps {
+  mode: Mode;
+  book?: Book;
+}
+
+interface FormState {
+  title: string;
+  author: string;
+  price: string;
+  currency: string;
+  stock: string;
+}
+
+function initFormState(book?: Book): FormState {
+  if (!book) {
+    return {
+      title: '',
+      author: '',
+      price: '',
+      currency: 'USD',
+      stock: ''
+    };
+  }
+  return {
+    title: book.title,
+    author: book.author,
+    price: String(book.price ?? ''),
+    currency: book.currency,
+    stock: String(book.stock ?? '')
+  };
+}
+
+export function BookForm({ mode, book }: BookFormProps) {
   const router = useRouter();
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState<FormState>(() => initFormState(book));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const title = useMemo(() => (mode === 'edit' ? 'Update book' : 'Create book'), [mode]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -25,21 +53,38 @@ export function NewBookForm() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loading) return;
+
     setError(null);
     setLoading(true);
+
     try {
-      const payload: BookCreate = {
+      const payloadBase: BookCreate = {
         title: form.title.trim(),
         author: form.author.trim(),
         price: Number(form.price),
         currency: form.currency.trim().toUpperCase(),
         stock: Number(form.stock)
       };
-      await createBook(payload);
-      setForm(defaultForm);
+
+      if (mode === 'create') {
+        await createBook(payloadBase);
+      } else if (book) {
+        const updatePayload: BookUpdate = {
+          title: payloadBase.title,
+          author: payloadBase.author,
+          price: payloadBase.price,
+          currency: payloadBase.currency,
+          stock: payloadBase.stock
+        };
+        await updateBook(book.id, updatePayload);
+      }
+
+      setForm(initFormState(mode === 'edit' ? book : undefined));
       router.push('/');
+      router.refresh();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create book.';
+      const message = err instanceof Error ? err.message : 'Failed to submit the form.';
       setError(message);
     } finally {
       setLoading(false);
@@ -62,6 +107,7 @@ export function NewBookForm() {
             className="input-field"
           />
         </div>
+
         <div className="form-field">
           <label htmlFor="author">Author</label>
           <input
@@ -75,6 +121,7 @@ export function NewBookForm() {
             className="input-field"
           />
         </div>
+
         <div className="form-field">
           <label htmlFor="price">Price</label>
           <input
@@ -90,6 +137,7 @@ export function NewBookForm() {
             className="input-field"
           />
         </div>
+
         <div className="form-field">
           <label htmlFor="currency">Currency</label>
           <input
@@ -104,6 +152,7 @@ export function NewBookForm() {
             className="input-field"
           />
         </div>
+
         <div className="form-field">
           <label htmlFor="stock">Stock</label>
           <input
@@ -119,16 +168,19 @@ export function NewBookForm() {
           />
         </div>
       </div>
+
       {error ? (
         <p role="alert" className="form-error">
           {error}
         </p>
       ) : null}
+
       <div className="form-actions">
         <button type="submit" className="button" disabled={loading}>
-          {loading ? 'Saving…' : 'Create book'}
+          {loading ? 'Saving…' : title}
         </button>
       </div>
     </form>
   );
 }
+

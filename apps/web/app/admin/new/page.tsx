@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { NewBookForm } from '@/components/NewBookForm';
+import { BookForm } from '@/components/BookForm';
 
 export const metadata = {
   title: 'Add Book — Packt Library'
@@ -18,7 +18,7 @@ export default function NewBookPage() {
             Enter the details below to add a new title to your Packt library. All fields are required.
           </p>
         </div>
-        <NewBookForm />
+        <BookForm mode="create" />
       </section>
     </div>
   );

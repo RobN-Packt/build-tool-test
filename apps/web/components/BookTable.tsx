@@ -1,4 +1,5 @@
 import { Book } from '@/lib/api';
+import { BookActions } from './BookActions';
 
 interface BookTableProps {
   books: Book[];
@@ -18,6 +19,7 @@ export function BookTable({ books }: BookTableProps) {
             <th>Author</th>
             <th>Price</th>
             <th>Stock</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -30,6 +32,9 @@ export function BookTable({ books }: BookTableProps) {
               </td>
               <td>
                 <span className="status-pill">{book.stock} in stock</span>
+              </td>
+              <td>
+                <BookActions id={book.id} title={book.title} />
               </td>
             </tr>
           ))}

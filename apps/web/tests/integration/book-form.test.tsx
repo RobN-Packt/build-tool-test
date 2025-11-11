@@ -1,22 +1,24 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NewBookForm } from '@/components/NewBookForm';
+import { BookForm } from '@/components/BookForm';
+import type { Book } from '@/lib/api';
 
 const pushMock = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: pushMock
+    push: pushMock,
+    refresh: vi.fn()
   })
 }));
 
-describe('NewBookForm', () => {
+describe('BookForm', () => {
   beforeEach(() => {
     pushMock.mockReset();
     vi.restoreAllMocks();
   });
 
-  it('submits form data via fetch and redirects', async () => {
+  it('submits create form and redirects', async () => {
     const user = userEvent.setup();
 
     const mockBody = {
@@ -37,7 +39,7 @@ describe('NewBookForm', () => {
 
     const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(mockResponse);
 
-    render(<NewBookForm />);
+    render(<BookForm mode="create" />);
 
     await act(async () => {
       await user.type(screen.getByLabelText(/title/i), 'New Book');
@@ -57,4 +59,44 @@ describe('NewBookForm', () => {
       expect(pushMock).toHaveBeenCalledWith('/');
     });
   });
+
+  it('submits edit form', async () => {
+    const user = userEvent.setup();
+
+    const existing: Book = {
+      id: 'abc',
+      title: 'Original',
+      author: 'Author',
+      price: 20,
+      currency: 'USD',
+      stock: 3,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const mockBody = { ...existing, title: 'Updated Title' };
+
+    const mockResponse = new Response(JSON.stringify(mockBody), {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    });
+
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(mockResponse);
+
+    render(<BookForm mode="edit" book={existing} />);
+
+    await act(async () => {
+      await user.clear(screen.getByLabelText(/title/i));
+      await user.type(screen.getByLabelText(/title/i), 'Updated Title');
+      await user.click(screen.getByRole('button', { name: /update book/i }));
+    });
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [request] = fetchSpy.mock.calls[0] as [Request];
+      expect(request.url).toMatch(/\/books\/abc$/);
+      expect(request.method).toBe('PUT');
+    });
+  });
 });
+

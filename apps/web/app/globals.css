@@ -274,6 +274,49 @@ a {
   border-bottom: none;
 }
 
+.table-actions {
+  display: inline-flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.action-link {
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--packt-dark);
+  border: 1px solid rgba(16, 20, 31, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-link:hover {
+  background: rgba(255, 111, 0, 0.12);
+  border-color: rgba(255, 111, 0, 0.35);
+  color: var(--packt-orange-dark);
+}
+
+.action-link.danger {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.35);
+  background: rgba(185, 28, 28, 0.08);
+}
+
+.action-link.danger:hover {
+  background: rgba(185, 28, 28, 0.16);
+  border-color: rgba(185, 28, 28, 0.55);
+  color: #7f1d1d;
+}
+
+.action-link:disabled,
+.action-link[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(226, 232, 240, 0.6);
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

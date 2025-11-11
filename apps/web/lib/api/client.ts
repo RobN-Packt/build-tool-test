@@ -39,7 +39,7 @@ export async function getBook(id: string) {
   if (error) {
     throw new Error(extractErrorMessage(error));
   }
-  return data;
+  return data ?? null;
 }
 
 export async function createBook(body: BookCreate) {

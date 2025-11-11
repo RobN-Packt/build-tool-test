@@ -2,6 +2,13 @@ import { render, screen } from '@testing-library/react';
 import { BookTable } from '@/components/BookTable';
 import type { Book } from '@/lib/api';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn()
+  })
+}));
+
 describe('Home page table', () => {
   it('renders book rows', () => {
     const books: Book[] = [
