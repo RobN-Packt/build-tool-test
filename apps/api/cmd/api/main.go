@@ -148,7 +148,7 @@ func buildHTTPHandler(pool *pgxpool.Pool) http.Handler {
 	registerHealthRoutes(api)
 	handlers.RegisterBookRoutes(api, bookHandler)
 
-	return middleware.Logger(router)
+	return middleware.CORS(middleware.Logger(router))
 }
 
 func registerHealthRoutes(api huma.API) {

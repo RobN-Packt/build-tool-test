@@ -3,40 +3,38 @@ import Link from 'next/link';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Book Store',
-  description: 'Simple book catalog powered by Huma API'
+  title: 'Packt Library',
+  description: 'Manage your Packt book inventory with ease.'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        style={{
-          margin: 0,
-          fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif',
-          backgroundColor: '#f7f7f8'
-        }}
-      >
-        <header
-          style={{
-            backgroundColor: '#ffffff',
-            borderBottom: '1px solid #e5e5e5',
-            padding: '1rem 2rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}
-        >
-          <Link href="/" style={{ fontSize: '1.25rem', fontWeight: 600, textDecoration: 'none' }}>
-            Book Store
-          </Link>
-          <nav style={{ display: 'flex', gap: '1rem' }}>
-            <Link href="/">Home</Link>
-            <Link href="/admin/new">New Book</Link>
-          </nav>
+      <body className="packt-body">
+        <header className="packt-header">
+          <div className="container header-content">
+            <Link href="/" className="brand">
+              Packt Library
+            </Link>
+            <nav className="packt-nav">
+              <Link href="/" className="packt-nav-link">
+                Home
+              </Link>
+              <Link href="/admin/new" className="packt-nav-link accent">
+                Add Book
+              </Link>
+            </nav>
+          </div>
         </header>
-        <main style={{ padding: '2rem', maxWidth: 960, margin: '0 auto' }}>{children}</main>
+        <main className="packt-main">
+          <div className="container">{children}</div>
+        </main>
+        <footer className="packt-footer">
+          <div className="container packt-footer-content">
+            <span>© {new Date().getFullYear()} Packt Publishing</span>
+            <span className="text-muted">Building knowledge through world-class technical content.</span>
+          </div>
+        </footer>
       </body>
     </html>
   );

@@ -1,19 +1,25 @@
+import Link from 'next/link';
 import { NewBookForm } from '@/components/NewBookForm';
 
 export const metadata = {
-  title: 'Create Book — Book Store'
+  title: 'Add Book — Packt Library'
 };
 
 export default function NewBookPage() {
   return (
-    <section style={{ display: 'grid', gap: '1.5rem' }}>
-      <header>
-        <h1>Create a new book</h1>
-        <p style={{ color: '#4b5563' }}>
-          Provide the book details below. All fields are required.
-        </p>
-      </header>
-      <NewBookForm />
-    </section>
+    <div className="page">
+      <Link href="/" className="back-link">
+        Back to inventory
+      </Link>
+      <section className="card form-card">
+        <div>
+          <h1 className="page-title">Create a new Packt book</h1>
+          <p className="text-muted">
+            Enter the details below to add a new title to your Packt library. All fields are required.
+          </p>
+        </div>
+        <NewBookForm />
+      </section>
+    </div>
   );
 }

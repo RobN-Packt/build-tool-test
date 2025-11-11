@@ -47,79 +47,88 @@ export function NewBookForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 480, display: 'grid', gap: '1rem' }}>
-      <div>
-        <label htmlFor="title">Title</label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          required
-          value={form.title}
-          onChange={handleChange}
-          placeholder="Book title"
-        />
-      </div>
-      <div>
-        <label htmlFor="author">Author</label>
-        <input
-          id="author"
-          name="author"
-          type="text"
-          required
-          value={form.author}
-          onChange={handleChange}
-          placeholder="Author name"
-        />
-      </div>
-      <div>
-        <label htmlFor="price">Price</label>
-        <input
-          id="price"
-          name="price"
-          type="number"
-          min="0"
-          step="0.01"
-          required
-          value={form.price}
-          onChange={handleChange}
-          placeholder="0.00"
-        />
-      </div>
-      <div>
-        <label htmlFor="currency">Currency</label>
-        <input
-          id="currency"
-          name="currency"
-          type="text"
-          required
-          maxLength={3}
-          value={form.currency}
-          onChange={handleChange}
-          placeholder="USD"
-        />
-      </div>
-      <div>
-        <label htmlFor="stock">Stock</label>
-        <input
-          id="stock"
-          name="stock"
-          type="number"
-          min="0"
-          required
-          value={form.stock}
-          onChange={handleChange}
-          placeholder="0"
-        />
+    <form className="form-card" onSubmit={handleSubmit}>
+      <div className="form-grid">
+        <div className="form-field">
+          <label htmlFor="title">Title</label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            required
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Hands-On Machine Learning with Go"
+            className="input-field"
+          />
+        </div>
+        <div className="form-field">
+          <label htmlFor="author">Author</label>
+          <input
+            id="author"
+            name="author"
+            type="text"
+            required
+            value={form.author}
+            onChange={handleChange}
+            placeholder="Jane Doe"
+            className="input-field"
+          />
+        </div>
+        <div className="form-field">
+          <label htmlFor="price">Price</label>
+          <input
+            id="price"
+            name="price"
+            type="number"
+            min="0"
+            step="0.01"
+            required
+            value={form.price}
+            onChange={handleChange}
+            placeholder="34.99"
+            className="input-field"
+          />
+        </div>
+        <div className="form-field">
+          <label htmlFor="currency">Currency</label>
+          <input
+            id="currency"
+            name="currency"
+            type="text"
+            required
+            maxLength={3}
+            value={form.currency}
+            onChange={handleChange}
+            placeholder="USD"
+            className="input-field"
+          />
+        </div>
+        <div className="form-field">
+          <label htmlFor="stock">Stock</label>
+          <input
+            id="stock"
+            name="stock"
+            type="number"
+            min="0"
+            required
+            value={form.stock}
+            onChange={handleChange}
+            placeholder="25"
+            className="input-field"
+          />
+        </div>
       </div>
       {error ? (
-        <p role="alert" style={{ color: 'crimson' }}>
+        <p role="alert" className="form-error">
           {error}
         </p>
       ) : null}
-      <button type="submit" disabled={loading}>
-        {loading ? 'Saving…' : 'Create Book'}
-      </button>
+      <div className="form-actions">
+        <button type="submit" className="button" disabled={loading}>
+          {loading ? 'Saving…' : 'Create book'}
+        </button>
+      </div>
     </form>
   );
 }

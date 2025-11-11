@@ -6,43 +6,35 @@ interface BookTableProps {
 
 export function BookTable({ books }: BookTableProps) {
   if (!books.length) {
-    return <p>No books available yet.</p>;
+    return <div className="empty-state">No Packt titles in your catalog yet.</div>;
   }
 
   return (
-    <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-      <thead>
-        <tr>
-          <th style={cellHeadStyle}>Title</th>
-          <th style={cellHeadStyle}>Author</th>
-          <th style={cellHeadStyle}>Price</th>
-          <th style={cellHeadStyle}>Stock</th>
-        </tr>
-      </thead>
-      <tbody>
-        {books.map((book) => (
-          <tr key={book.id}>
-            <td style={cellBodyStyle}>{book.title}</td>
-            <td style={cellBodyStyle}>{book.author}</td>
-            <td style={cellBodyStyle}>
-              {book.currency} {Number(book.price).toFixed(2)}
-            </td>
-            <td style={cellBodyStyle}>{book.stock}</td>
+    <div className="table-wrapper">
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Price</th>
+            <th>Stock</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {books.map((book) => (
+            <tr key={book.id}>
+              <td>{book.title}</td>
+              <td>{book.author}</td>
+              <td>
+                <strong>{book.currency}</strong> {Number(book.price).toFixed(2)}
+              </td>
+              <td>
+                <span className="status-pill">{book.stock} in stock</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
-
-const cellHeadStyle: React.CSSProperties = {
-  borderBottom: '1px solid #ddd',
-  padding: '0.5rem',
-  textAlign: 'left',
-  fontWeight: 600
-};
-
-const cellBodyStyle: React.CSSProperties = {
-  borderBottom: '1px solid #f0f0f0',
-  padding: '0.5rem'
-};
