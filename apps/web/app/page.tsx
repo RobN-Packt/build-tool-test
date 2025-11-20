@@ -5,7 +5,20 @@ import { BookTable } from '@/components/BookTable';
 export const revalidate = 0;
 
 export default async function Page() {
-  const books = await listBooks().catch(() => []);
+  let books: Awaited<ReturnType<typeof listBooks>> = [];
+  let booksError: string | null = null;
+
+  try {
+    books = await listBooks();
+  } catch (error) {
+    booksError = error instanceof Error ? error.message : 'Failed to load books.';
+  }
+
+  const statusMessage = booksError
+    ? `Unable to load inventory: ${booksError}`
+    : books.length === 0
+      ? 'No books yet — add your first Packt title to get started.'
+      : `You have ${books.length} curated ${books.length === 1 ? 'title' : 'titles'} ready for your readers.`;
 
   return (
     <div className="page">
@@ -35,17 +48,15 @@ export default async function Page() {
         <header className="section-header">
           <div>
             <h2 className="page-title">Inventory</h2>
-            <p className="text-muted">
-              {books.length === 0
-                ? 'No books yet — add your first Packt title to get started.'
-                : `You have ${books.length} curated ${books.length === 1 ? 'title' : 'titles'} ready for your readers.`}
-            </p>
+              <p className={booksError ? 'text-danger' : 'text-muted'} role={booksError ? 'alert' : undefined}>
+                {statusMessage}
+              </p>
           </div>
           <Link href="/admin/new" className="button secondary">
             New entry
           </Link>
         </header>
-        <BookTable books={books} />
+          <BookTable books={booksError ? [] : books} />
       </section>
     </div>
   );
