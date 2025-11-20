@@ -387,6 +387,11 @@ a {
   color: var(--packt-muted);
 }
 
+.text-danger {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;
