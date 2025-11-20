@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BookForm } from '@/components/BookForm';
-import type { Book } from '@/lib/api';
+import type { Book } from '@/lib/api/types';
 
 const pushMock = vi.fn();
 

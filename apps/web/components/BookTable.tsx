@@ -1,4 +1,4 @@
-import { Book } from '@/lib/api';
+import type { Book } from '@/lib/api/types';
 import { BookActions } from './BookActions';
 
 interface BookTableProps {

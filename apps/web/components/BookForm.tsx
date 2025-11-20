@@ -2,7 +2,8 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBook, updateBook, type Book, type BookCreate, type BookUpdate } from '@/lib/api';
+import { createBook, updateBook } from '@/lib/api/client';
+import type { Book, BookCreate, BookUpdate } from '@/lib/api/types';
 
 type Mode = 'create' | 'edit';
 

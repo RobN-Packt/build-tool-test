@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { listBooks } from '@/lib/api';
+import { listBooks } from '@/lib/api/server';
 import { BookTable } from '@/components/BookTable';
 
 export const revalidate = 0;
