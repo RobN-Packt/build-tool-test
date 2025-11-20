@@ -1,10 +1,28 @@
 import createClient from 'openapi-fetch';
 import type { paths, components } from './types';
 
-const baseUrl = '/api';
+function resolveOrigin() {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+
+  const explicit =
+    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_VERCEL_URL;
+
+  if (explicit) {
+    const normalized = explicit.startsWith('http') ? explicit : `https://${explicit}`;
+    return normalized.replace(/\/$/, '');
+  }
+
+  return 'http://localhost:3000';
+}
+
+function resolveBaseUrl() {
+  return `${resolveOrigin()}/api`;
+}
 
 export const client = createClient<paths>({
-  baseUrl,
+  baseUrl: resolveBaseUrl(),
   fetch: (...args) => fetch(...args)
 });
 

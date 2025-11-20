@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getBook } from '@/lib/api';
+import { getBook } from '@/lib/api/server';
 import { BookForm } from '@/components/BookForm';
 
 interface EditBookPageProps {
