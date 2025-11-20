@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { proxyToBooksBackend } from '../proxy';
 
+export const runtime = 'nodejs';
+
 type RouteContext = {
   params: {
     id: string;
