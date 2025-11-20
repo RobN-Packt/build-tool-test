@@ -176,3 +176,8 @@ export interface operations {
     };
   };
 }
+
+export type Book = components["schemas"]["Book"];
+export type BookCreate = components["schemas"]["BookCreate"];
+export type BookUpdate = components["schemas"]["BookUpdate"];
+export type ErrorResponse = components["schemas"]["Error"];
