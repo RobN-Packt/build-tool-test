@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humamux"
 	"github.com/gorilla/mux"
@@ -22,6 +24,7 @@ import (
 
 	"github.com/example/bookapi/internal/http/handlers"
 	"github.com/example/bookapi/internal/http/middleware"
+	"github.com/example/bookapi/internal/notifications"
 	"github.com/example/bookapi/internal/repo"
 	"github.com/example/bookapi/internal/repo/migrations"
 	"github.com/example/bookapi/internal/service"
@@ -138,7 +141,7 @@ type healthOutput struct {
 
 func buildHTTPHandler(pool *pgxpool.Pool) http.Handler {
 	bookRepo := repo.NewBookRepository(pool)
-	bookService := service.NewBookService(bookRepo)
+	bookService := service.NewBookService(bookRepo, buildBookServiceOptions(context.Background())...)
 	bookHandler := handlers.NewBookHandler(bookService)
 
 	router := mux.NewRouter()
@@ -163,4 +166,33 @@ func registerHealthRoutes(api huma.API) {
 		out.Body.Status = "ok"
 		return out, nil
 	})
+}
+
+func buildBookServiceOptions(ctx context.Context) []service.BookServiceOption {
+	var opts []service.BookServiceOption
+
+	publisher, err := configureSNSBookPublisher(ctx)
+	if err != nil {
+		slog.Error("failed to configure SNS publisher for book events", "error", err)
+	} else if publisher != nil {
+		opts = append(opts, service.WithBookEventPublisher(publisher))
+	}
+
+	return opts
+}
+
+func configureSNSBookPublisher(ctx context.Context) (service.BookEventPublisher, error) {
+	topicARN := strings.TrimSpace(os.Getenv("SNS_TOPIC_ARN"))
+	if topicARN == "" {
+		slog.Warn("SNS_TOPIC_ARN not set; book created events will not be published")
+		return nil, nil
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("load AWS config: %w", err)
+	}
+
+	client := sns.NewFromConfig(cfg)
+	return notifications.NewSNSBookEventPublisher(client, topicARN, slog.Default()), nil
 }
