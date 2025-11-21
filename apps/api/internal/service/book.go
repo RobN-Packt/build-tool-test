@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -28,16 +29,29 @@ type BookRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type BookService struct {
-	repo BookRepository
-	now  func() time.Time
+// BookEventPublisher emits domain events for books.
+type BookEventPublisher interface {
+	PublishBookCreated(ctx context.Context, book domain.Book) error
 }
 
-func NewBookService(repo BookRepository) *BookService {
-	return &BookService{
-		repo: repo,
-		now:  time.Now,
+type BookService struct {
+	repo      BookRepository
+	now       func() time.Time
+	publisher BookEventPublisher
+}
+
+func NewBookService(repo BookRepository, opts ...BookServiceOption) *BookService {
+	service := &BookService{
+		repo:      repo,
+		now:       time.Now,
+		publisher: noopBookEventPublisher{},
 	}
+
+	for _, opt := range opts {
+		opt(service)
+	}
+
+	return service
 }
 
 type BookCreateInput struct {
@@ -76,6 +90,14 @@ func (s *BookService) CreateBook(ctx context.Context, input BookCreateInput) (do
 	if err := s.repo.Create(ctx, book); err != nil {
 		return domain.Book{}, err
 	}
+
+	if err := s.publisher.PublishBookCreated(ctx, book); err != nil {
+		slog.Error("failed to publish book created event",
+			"error", err,
+			"bookId", book.ID,
+		)
+	}
+
 	return book, nil
 }
 
@@ -217,4 +239,23 @@ func validateBookUpdateInput(input BookUpdateInput) error {
 func withinLength(value string, min, max int) bool {
 	length := utf8.RuneCountInString(value)
 	return length >= min && length <= max
+}
+
+type noopBookEventPublisher struct{}
+
+func (noopBookEventPublisher) PublishBookCreated(context.Context, domain.Book) error {
+	return nil
+}
+
+// BookServiceOption configures BookService behavior.
+type BookServiceOption func(*BookService)
+
+// WithBookEventPublisher wires a custom event publisher for book domain events.
+func WithBookEventPublisher(publisher BookEventPublisher) BookServiceOption {
+	return func(service *BookService) {
+		if publisher == nil {
+			return
+		}
+		service.publisher = publisher
+	}
 }
