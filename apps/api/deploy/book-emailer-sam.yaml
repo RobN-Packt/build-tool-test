@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: SNS-driven Lambda that emails users when a book is created.
+
+Parameters:
+  BookCreatedTopicArn:
+    Type: String
+    Description: ARN of the existing BOOK_CREATED SNS topic
+  SesRegion:
+    Type: String
+    Description: Region to use for SES
+  FromEmail:
+    Type: String
+    Description: Verified SES sender email address
+  ToEmail:
+    Type: String
+    Description: Default recipient email address when userEmail is absent
+
+Resources:
+  BookCreatedEmailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-book-emailer"
+      Runtime: provided.al2023
+      Architectures:
+        - arm64
+      Handler: bootstrap
+      Timeout: 10
+      MemorySize: 256
+      CodeUri: ../
+      Environment:
+        Variables:
+          SES_REGION: !Ref SesRegion
+          FROM_EMAIL: !Ref FromEmail
+          TO_EMAIL: !Ref ToEmail
+      Events:
+        BookCreatedTopic:
+          Type: SNS
+          Properties:
+            Topic: !Ref BookCreatedTopicArn
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: "*"
+    Metadata:
+      BuildMethod: go1.x
+      BuildProperties:
+        GoMod: ../go.mod
+        Package: ./cmd/book_created_emailer
+        GoBuildFlags: "-tags lambda.norpc"
