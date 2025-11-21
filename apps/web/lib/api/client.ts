@@ -1,8 +1,29 @@
 import createClient from 'openapi-fetch';
 import type { paths, components } from './types';
 
+function resolveBrowserBaseUrl(envBaseUrl?: string) {
+  if (envBaseUrl?.startsWith('/')) {
+    return envBaseUrl;
+  }
+  if (envBaseUrl) {
+    return envBaseUrl;
+  }
+  return '/api';
+}
+
+function resolveServerBaseUrl(envBaseUrl?: string) {
+  const vercelUrl = process.env.VERCEL_URL?.replace(/\/$/, '');
+  if (vercelUrl) {
+    return `https://${vercelUrl}/api`;
+  }
+  return envBaseUrl ?? 'http://localhost:8080';
+}
+
+const normalizedEnvBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
 const baseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8080';
+  typeof window === 'undefined'
+    ? resolveServerBaseUrl(normalizedEnvBaseUrl)
+    : resolveBrowserBaseUrl(normalizedEnvBaseUrl);
 
 export const client = createClient<paths>({
   baseUrl,
