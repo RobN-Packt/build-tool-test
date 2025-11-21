@@ -1,6 +1,6 @@
 # Book API & Web UI
 
-Monorepo containing a Go/Huma API with PostgreSQL storage and a Next.js (TypeScript) frontend.
+Monorepo containing a Go/Huma API with PostgreSQL storage and a Next.js (TypeScript) frontend. This is a dummy book purchasing site.
 
 ## Prerequisites
 
