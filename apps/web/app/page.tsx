@@ -12,6 +12,7 @@ export default async function Page() {
     books = await listBooks();
   } catch (error) {
     booksError = error instanceof Error ? error.message : 'Failed to load books.';
+    console.error('[books] SSR listBooks failed', { message: booksError });
   }
 
   const statusMessage = booksError

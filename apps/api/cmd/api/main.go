@@ -52,7 +52,13 @@ func run(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	pool, err := pgxpool.New(ctx, dsn)
+	cfg, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return fmt.Errorf("parse DB_DSN: %w", err)
+	}
+	logDatabaseConfig(cfg)
+
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("connect to database: %w", err)
 	}
@@ -67,7 +73,7 @@ func run(args []string) error {
 		return nil
 	}
 
-	httpHandler := buildHTTPHandler(pool)
+	httpHandler := buildHTTPHandler(pool, slog.Default())
 
 	server := &http.Server{
 		Addr:         ":" + port,
@@ -136,22 +142,35 @@ type healthOutput struct {
 	}
 }
 
-func buildHTTPHandler(pool *pgxpool.Pool) http.Handler {
+type booksHealthOutput struct {
+	Body struct {
+		Status    string    `json:"status"`
+		CheckedAt time.Time `json:"checkedAt"`
+	}
+}
+
+func buildHTTPHandler(pool *pgxpool.Pool, logger *slog.Logger) http.Handler {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	bookRepo := repo.NewBookRepository(pool)
 	bookService := service.NewBookService(bookRepo)
-	bookHandler := handlers.NewBookHandler(bookService)
+	bookHandler := handlers.NewBookHandler(bookService, logger)
 
 	router := mux.NewRouter()
 	config := huma.DefaultConfig("Book API", "1.0.0")
 	api := humamux.New(router, config)
 
-	registerHealthRoutes(api)
+	registerHealthRoutes(api, bookRepo, logger)
 	handlers.RegisterBookRoutes(api, bookHandler)
 
 	return middleware.CORS(middleware.Logger(router))
 }
 
-func registerHealthRoutes(api huma.API) {
+func registerHealthRoutes(api huma.API, bookRepo *repo.BookRepository, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	huma.Register(api, huma.Operation{
 		OperationID:   "healthz",
 		Method:        http.MethodGet,
@@ -163,4 +182,39 @@ func registerHealthRoutes(api huma.API) {
 		out.Body.Status = "ok"
 		return out, nil
 	})
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "books-health",
+		Method:        http.MethodGet,
+		Path:          "/health/books",
+		Summary:       "Check database access via books table",
+		DefaultStatus: http.StatusOK,
+	}, func(ctx context.Context, _ *struct{}) (*booksHealthOutput, error) {
+		checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		if err := bookRepo.CheckBooks(checkCtx); err != nil {
+			logger.Error("books health check failed", "error", err)
+			return nil, huma.NewError(http.StatusInternalServerError, fmt.Sprintf("books health check failed: %v", err))
+		}
+
+		out := &booksHealthOutput{}
+		out.Body.Status = "ok"
+		out.Body.CheckedAt = time.Now().UTC()
+		return out, nil
+	})
+}
+
+func logDatabaseConfig(cfg *pgxpool.Config) {
+	if cfg == nil || cfg.ConnConfig == nil {
+		return
+	}
+	logger := slog.Default()
+	logger.Info("database configuration",
+		"host", cfg.ConnConfig.Host,
+		"port", cfg.ConnConfig.Port,
+		"database", cfg.ConnConfig.Database,
+		"user", cfg.ConnConfig.User,
+		"sslmode", cfg.ConnConfig.Config.RuntimeParams["sslmode"],
+	)
 }

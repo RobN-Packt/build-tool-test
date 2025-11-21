@@ -2,11 +2,15 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
+	"net"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/example/bookapi/internal/domain"
@@ -17,10 +21,14 @@ import (
 
 type BookHandler struct {
 	service *service.BookService
+	logger  *slog.Logger
 }
 
-func NewBookHandler(service *service.BookService) *BookHandler {
-	return &BookHandler{service: service}
+func NewBookHandler(service *service.BookService, logger *slog.Logger) *BookHandler {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return &BookHandler{service: service, logger: logger}
 }
 
 type BookIDInput struct {
@@ -99,7 +107,16 @@ func RegisterBookRoutes(api huma.API, handler *BookHandler) {
 func (h *BookHandler) listBooks(ctx context.Context, _ *struct{}) (*ListBooksOutput, error) {
 	books, err := h.service.ListBooks(ctx)
 	if err != nil {
-		return nil, huma.NewError(http.StatusInternalServerError, err.Error())
+		category, detail := categorizeDBError(err)
+		attrs := []any{
+			"category", category,
+			"error", err,
+		}
+		if detail != "" {
+			attrs = append(attrs, "detail", detail)
+		}
+		h.logger.Error("list books failed", attrs...)
+		return nil, huma.NewError(http.StatusInternalServerError, "failed to list books")
 	}
 
 	result := make([]openapi.Book, 0, len(books))
@@ -164,6 +181,42 @@ func (h *BookHandler) deleteBook(ctx context.Context, input *BookIDInput) (*stru
 		return nil, huma.NewError(http.StatusInternalServerError, err.Error())
 	}
 	return nil, nil
+}
+
+const permissionDeniedCode = "42501"
+
+func categorizeDBError(err error) (string, string) {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		category := "postgres_error"
+		if pgErr.Code == permissionDeniedCode {
+			category = "permission_denied"
+		}
+		detail := fmt.Sprintf("code=%s", pgErr.Code)
+		if pgErr.Detail != "" {
+			detail = detail + " detail=" + pgErr.Detail
+		}
+		return category, detail
+	}
+
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return "dns_failure", dnsErr.Error()
+	}
+
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		if netErr.Timeout() {
+			return "network_timeout", ""
+		}
+		return "network_error", ""
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "deadline_exceeded", ""
+	}
+
+	return "unknown", ""
 }
 
 func toOpenAPIBook(book domain.Book) openapi.Book {
