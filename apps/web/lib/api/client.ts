@@ -7,10 +7,23 @@ const serverBaseUrl =
   publicBaseUrl ??
   'http://localhost:8080';
 
-const baseUrl =
-  typeof window === 'undefined'
-    ? serverBaseUrl
-    : publicBaseUrl ?? `${window.location.origin}/api`;
+function resolveBrowserBaseUrl() {
+  if (!publicBaseUrl) {
+    return `${window.location.origin}/api`;
+  }
+
+  const isHttpsPage = window.location.protocol === 'https:';
+  const isPublicBaseHttp = publicBaseUrl.startsWith('http://');
+
+  if (isHttpsPage && isPublicBaseHttp) {
+    // Avoid mixed-content rejections by falling back to the same-origin proxy.
+    return `${window.location.origin}/api`;
+  }
+
+  return publicBaseUrl;
+}
+
+const baseUrl = typeof window === 'undefined' ? serverBaseUrl : resolveBrowserBaseUrl();
 
 export const client = createClient<paths>({
   baseUrl,
