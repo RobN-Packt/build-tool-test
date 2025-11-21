@@ -1,8 +1,16 @@
 import createClient from 'openapi-fetch';
 import type { paths, components } from './types';
 
+const publicBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
+const serverBaseUrl =
+  process.env.API_SERVER_BASE_URL?.replace(/\/$/, '') ??
+  publicBaseUrl ??
+  'http://localhost:8080';
+
 const baseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8080';
+  typeof window === 'undefined'
+    ? serverBaseUrl
+    : publicBaseUrl ?? `${window.location.origin}/api`;
 
 export const client = createClient<paths>({
   baseUrl,
