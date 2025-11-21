@@ -12,9 +12,12 @@ Minimal Next.js app for managing books via the Book API.
 ```bash
 cd apps/web
 cp .env.example .env.local
-# adjust NEXT_PUBLIC_API_BASE_URL if the API runs elsewhere
+# set BACKEND_INTERNAL_URL to wherever the API is reachable
 (cd ../.. && pnpm install)
 ```
+
+> **Note:** `NEXT_PUBLIC_API_BASE_URL` is still read as a fallback for older deployments, but
+> `BACKEND_INTERNAL_URL` is the preferred variable going forward.
 
 ## Development
 
@@ -48,7 +51,7 @@ pnpm --filter book-web start
 
 ```bash
 docker build -t book-web .
-docker run --rm -p 3000:3000 -e NEXT_PUBLIC_API_BASE_URL="http://host.docker.internal:8080" book-web
+docker run --rm -p 3000:3000 -e BACKEND_INTERNAL_URL="http://host.docker.internal:8080" book-web
 ```
 
 ## Code Generation

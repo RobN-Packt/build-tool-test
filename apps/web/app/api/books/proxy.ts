@@ -1,31 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendBaseUrl } from '@/lib/api/server';
 
 const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-function missingBackendResponse() {
+function missingBackendResponse(message?: string) {
   return NextResponse.json(
-    { error: 'BACKEND_INTERNAL_URL is not configured' },
+    { error: message ?? 'BACKEND_INTERNAL_URL is not configured' },
     { status: 500 }
   );
 }
 
 function buildUpstreamUrl(path: string, search: string) {
-  const backendBase = process.env.BACKEND_INTERNAL_URL;
-  if (!backendBase) {
-    return null;
-  }
-
-  const normalizedBase = backendBase.endsWith('/')
-    ? backendBase.slice(0, -1)
-    : backendBase;
-
-  return `${normalizedBase}${path}${search}`;
+  const backendBase = getBackendBaseUrl();
+  return `${backendBase}${path}${search}`;
 }
 
 export async function proxyToBooksBackend(req: NextRequest, targetPath: string) {
-  const upstreamUrl = buildUpstreamUrl(targetPath, req.nextUrl.search);
-  if (!upstreamUrl) {
-    return missingBackendResponse();
+  let upstreamUrl: string;
+  try {
+    upstreamUrl = buildUpstreamUrl(targetPath, req.nextUrl.search);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'BACKEND_INTERNAL_URL is not configured';
+    return missingBackendResponse(message);
   }
 
   const init: RequestInit = {

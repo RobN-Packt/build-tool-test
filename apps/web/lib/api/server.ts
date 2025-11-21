@@ -22,11 +22,19 @@ interface BackendDiagnostics {
 
 const ERROR_PREVIEW_LIMIT = 512;
 
-function getBackendBaseUrl() {
-  const base = process.env.BACKEND_INTERNAL_URL;
+export function getBackendBaseUrl() {
+  const candidates = [
+    process.env.BACKEND_INTERNAL_URL,
+    process.env.NEXT_PUBLIC_API_BASE_URL
+  ].filter((value): value is string => Boolean(value?.trim()));
+
+  const base = candidates[0];
   if (!base) {
-    throw new Error('BACKEND_INTERNAL_URL is not configured');
+    throw new Error(
+      'BACKEND_INTERNAL_URL is not configured. Set BACKEND_INTERNAL_URL (preferred) or NEXT_PUBLIC_API_BASE_URL.'
+    );
   }
+
   return base.endsWith('/') ? base.slice(0, -1) : base;
 }
 

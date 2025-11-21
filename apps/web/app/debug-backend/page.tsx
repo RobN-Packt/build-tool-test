@@ -4,16 +4,24 @@ export const revalidate = 0;
 
 export default async function DebugBackendPage() {
   const diagnostics = await fetchBackendHealthDiagnostics();
-  const backendUrl = process.env.BACKEND_INTERNAL_URL ?? 'unset';
+  const backendUrl =
+    process.env.BACKEND_INTERNAL_URL ??
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    'unset';
+  const backendEnvVar = process.env.BACKEND_INTERNAL_URL
+    ? 'BACKEND_INTERNAL_URL'
+    : process.env.NEXT_PUBLIC_API_BASE_URL
+      ? 'NEXT_PUBLIC_API_BASE_URL'
+      : 'unset';
 
   return (
     <div className="page">
       <section className="card">
         <h1>Backend diagnostics</h1>
-        <p className="text-muted">
-          SSR environment will attempt to reach <code>{diagnostics.url}</code> using{' '}
-          <code>BACKEND_INTERNAL_URL</code> = <code>{backendUrl}</code>.
-        </p>
+          <p className="text-muted">
+            SSR environment will attempt to reach <code>{diagnostics.url}</code> using{' '}
+            <code>{backendEnvVar}</code> = <code>{backendUrl}</code>.
+          </p>
         <dl>
           <dt>Status</dt>
           <dd>
