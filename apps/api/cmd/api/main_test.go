@@ -39,7 +39,7 @@ func TestBookCRUDIntegration(t *testing.T) {
 		_, _ = pool.Exec(context.Background(), "TRUNCATE TABLE books")
 	})
 
-	server := httptest.NewServer(buildHTTPHandler(pool))
+	server := httptest.NewServer(buildHTTPHandler(pool, nil))
 	defer server.Close()
 
 	client := server.Client()
@@ -126,7 +126,7 @@ func TestBookCRUDIntegration(t *testing.T) {
 }
 
 func TestHealthEndpoint(t *testing.T) {
-	handler := buildHTTPHandler(nil)
+	handler := buildHTTPHandler(nil, nil)
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
@@ -137,7 +137,7 @@ func TestHealthEndpoint(t *testing.T) {
 }
 
 func TestOpenAPIExposed(t *testing.T) {
-	handler := buildHTTPHandler(nil)
+	handler := buildHTTPHandler(nil, nil)
 	server := httptest.NewServer(handler)
 	defer server.Close()
 

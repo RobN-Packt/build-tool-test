@@ -125,6 +125,19 @@ func (r *BookRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+func (r *BookRepository) CheckBooks(ctx context.Context) error {
+	const query = `SELECT 1 FROM books LIMIT 1`
+	var sentinel int
+	err := r.pool.QueryRow(ctx, query).Scan(&sentinel)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("books health query: %w", err)
+	}
+	return nil
+}
+
 func scanBook(row pgx.Row) (domain.Book, error) {
 	var book domain.Book
 	err := row.Scan(
