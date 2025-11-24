@@ -41,7 +41,7 @@ func (p *SNSBookEventPublisher) PublishBookCreated(ctx context.Context, book dom
 
 	payload := map[string]any{
 		"type":   bookCreatedEventType,
-		"bookId": book.ID,
+		"bookId": book.ID.String(),
 		"title":  book.Title,
 		"price":  book.Price,
 	}

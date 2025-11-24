@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -17,7 +18,7 @@ import (
 
 const (
 	expectedType = "BOOK_CREATED"
-	emailBodyTpl = "A new book has been added:\nTitle: %s\nPrice: £%.2f\n\nBook ID: %d\n\nThis is an automated message."
+	emailBodyTpl = "A new book has been added:\nTitle: %s\nPrice: £%.2f\n\nBook ID: %s\n\nThis is an automated message."
 )
 
 // Handler processes BOOK_CREATED SNS messages and emails end users.
@@ -89,7 +90,7 @@ func (h *Handler) processRecord(ctx context.Context, record events.SNSEventRecor
 		return errors.New("no recipient email provided")
 	}
 
-	bookID := *msg.BookID
+	bookID := msg.BookID
 	price := *msg.Price
 
 	subject := fmt.Sprintf("New book added: %s", msg.Title)
@@ -112,7 +113,7 @@ func (h *Handler) processRecord(ctx context.Context, record events.SNSEventRecor
 // BookCreatedMessage mirrors the SNS message schema.
 type BookCreatedMessage struct {
 	Type      string   `json:"type"`
-	BookID    *int64   `json:"bookId"`
+	BookID    string   `json:"bookId"`
 	Title     string   `json:"title"`
 	Price     *float64 `json:"price"`
 	UserEmail string   `json:"userEmail"`
@@ -122,7 +123,7 @@ func validateMessage(msg BookCreatedMessage) error {
 	switch {
 	case msg.Type != expectedType:
 		return fmt.Errorf("unexpected message type: %s", msg.Type)
-	case msg.BookID == nil:
+	case strings.TrimSpace(msg.BookID) == "":
 		return errors.New("bookId must be provided")
 	case msg.Title == "":
 		return errors.New("title must be provided")
