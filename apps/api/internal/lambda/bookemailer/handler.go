@@ -90,7 +90,7 @@ func (h *Handler) processRecord(ctx context.Context, record events.SNSEventRecor
 		return errors.New("no recipient email provided")
 	}
 
-	bookID := msg.BookID
+	bookID := msg.BookID.String()
 	price := *msg.Price
 
 	subject := fmt.Sprintf("New book added: %s", msg.Title)
@@ -112,18 +112,18 @@ func (h *Handler) processRecord(ctx context.Context, record events.SNSEventRecor
 
 // BookCreatedMessage mirrors the SNS message schema.
 type BookCreatedMessage struct {
-	Type      string   `json:"type"`
-	BookID    string   `json:"bookId"`
-	Title     string   `json:"title"`
-	Price     *float64 `json:"price"`
-	UserEmail string   `json:"userEmail"`
+	Type      string         `json:"type"`
+	BookID    flexibleString `json:"bookId"`
+	Title     string         `json:"title"`
+	Price     *float64       `json:"price"`
+	UserEmail string         `json:"userEmail"`
 }
 
 func validateMessage(msg BookCreatedMessage) error {
 	switch {
 	case msg.Type != expectedType:
 		return fmt.Errorf("unexpected message type: %s", msg.Type)
-	case strings.TrimSpace(msg.BookID) == "":
+	case strings.TrimSpace(msg.BookID.String()) == "":
 		return errors.New("bookId must be provided")
 	case msg.Title == "":
 		return errors.New("title must be provided")
@@ -164,4 +164,26 @@ func (s *sesSender) Send(ctx context.Context, to, subject, body string) error {
 
 	_, err := s.client.SendEmail(ctx, input)
 	return err
+}
+
+type flexibleString string
+
+func (fs flexibleString) String() string {
+	return string(fs)
+}
+
+func (fs *flexibleString) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*fs = flexibleString(s)
+		return nil
+	}
+
+	var num json.Number
+	if err := json.Unmarshal(data, &num); err == nil {
+		*fs = flexibleString(num.String())
+		return nil
+	}
+
+	return errors.New("bookId must be a string or number")
 }
