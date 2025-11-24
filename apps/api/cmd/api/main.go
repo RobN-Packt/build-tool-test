@@ -184,15 +184,40 @@ func buildBookServiceOptions(ctx context.Context) []service.BookServiceOption {
 func configureSNSBookPublisher(ctx context.Context) (service.BookEventPublisher, error) {
 	topicARN := strings.TrimSpace(os.Getenv("SNS_TOPIC_ARN"))
 	if topicARN == "" {
-		slog.Warn("SNS_TOPIC_ARN not set; book created events will not be published")
+		slog.Warn("SNS_TOPIC_ARN not set; book created events will not be published",
+			"envVar", "SNS_TOPIC_ARN",
+		)
 		return nil, nil
 	}
 
-	cfg, err := config.LoadDefaultConfig(ctx)
+	region, err := snsRegionFromARN(topicARN)
+	if err != nil {
+		slog.Error("unable to derive AWS region from SNS topic ARN; book created events disabled",
+			"topicArn", topicARN,
+			"error", err,
+		)
+		return nil, err
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("load AWS config: %w", err)
 	}
 
 	client := sns.NewFromConfig(cfg)
 	return notifications.NewSNSBookEventPublisher(client, topicARN, slog.Default()), nil
+}
+
+func snsRegionFromARN(topicARN string) (string, error) {
+	parts := strings.Split(topicARN, ":")
+	if len(parts) < 6 || parts[0] != "arn" {
+		return "", fmt.Errorf("invalid SNS topic ARN: %s", topicARN)
+	}
+
+	region := strings.TrimSpace(parts[3])
+	if region == "" {
+		return "", fmt.Errorf("missing region in SNS topic ARN: %s", topicARN)
+	}
+
+	return region, nil
 }

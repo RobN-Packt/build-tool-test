@@ -15,6 +15,10 @@ cp .env.example .env
 # adjust DB_DSN if needed (defaults to books database)
 ```
 
+### Book Created Notifications
+
+To emit SNS events whenever a book is created, set the `SNS_TOPIC_ARN` environment variable. The API automatically infers the AWS region from the ARN, so you only need to provide credentials (for example via `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) that are permitted to publish to that topic.
+
 ## Running Locally
 
 - Apply migrations: `make migrate`
