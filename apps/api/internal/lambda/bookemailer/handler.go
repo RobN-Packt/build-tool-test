@@ -96,7 +96,21 @@ func (h *Handler) processRecord(ctx context.Context, record events.SNSEventRecor
 	subject := fmt.Sprintf("New book added: %s", msg.Title)
 	body := fmt.Sprintf(emailBodyTpl, msg.Title, price, bookID)
 
+	h.logger.Info("attempting to send book created email",
+		"bookId", bookID,
+		"title", msg.Title,
+		"recipient", recipient,
+		"messageId", record.SNS.MessageID,
+	)
+
 	if err := h.sender.Send(ctx, recipient, subject, body); err != nil {
+		h.logger.Error("failed to send book created email",
+			"error", err,
+			"bookId", bookID,
+			"title", msg.Title,
+			"recipient", recipient,
+			"messageId", record.SNS.MessageID,
+		)
 		return fmt.Errorf("send email: %w", err)
 	}
 
