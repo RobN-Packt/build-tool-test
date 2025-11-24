@@ -188,11 +188,30 @@ func configureSNSBookPublisher(ctx context.Context) (service.BookEventPublisher,
 		return nil, nil
 	}
 
-	cfg, err := config.LoadDefaultConfig(ctx)
+	region, err := snsRegionFromARN(topicARN)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("load AWS config: %w", err)
 	}
 
 	client := sns.NewFromConfig(cfg)
 	return notifications.NewSNSBookEventPublisher(client, topicARN, slog.Default()), nil
+}
+
+func snsRegionFromARN(topicARN string) (string, error) {
+	parts := strings.Split(topicARN, ":")
+	if len(parts) < 6 || parts[0] != "arn" {
+		return "", fmt.Errorf("invalid SNS topic ARN: %s", topicARN)
+	}
+
+	region := strings.TrimSpace(parts[3])
+	if region == "" {
+		return "", fmt.Errorf("missing region in SNS topic ARN: %s", topicARN)
+	}
+
+	return region, nil
 }
