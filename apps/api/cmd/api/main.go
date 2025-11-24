@@ -184,12 +184,18 @@ func buildBookServiceOptions(ctx context.Context) []service.BookServiceOption {
 func configureSNSBookPublisher(ctx context.Context) (service.BookEventPublisher, error) {
 	topicARN := strings.TrimSpace(os.Getenv("SNS_TOPIC_ARN"))
 	if topicARN == "" {
-		slog.Warn("SNS_TOPIC_ARN not set; book created events will not be published")
+		slog.Warn("SNS_TOPIC_ARN not set; book created events will not be published",
+			"envVar", "SNS_TOPIC_ARN",
+		)
 		return nil, nil
 	}
 
 	region, err := snsRegionFromARN(topicARN)
 	if err != nil {
+		slog.Error("unable to derive AWS region from SNS topic ARN; book created events disabled",
+			"topicArn", topicARN,
+			"error", err,
+		)
 		return nil, err
 	}
 
