@@ -51,17 +51,28 @@ func (p *SNSBookEventPublisher) PublishBookCreated(ctx context.Context, book dom
 		return fmt.Errorf("marshal book created payload: %w", err)
 	}
 
-	_, err = p.client.Publish(ctx, &sns.PublishInput{
+	p.logger.Info("attempting to publish book created message",
+		"bookId", book.ID,
+		"topicArn", p.topicARN,
+	)
+
+	resp, err := p.client.Publish(ctx, &sns.PublishInput{
 		TopicArn: aws.String(p.topicARN),
 		Message:  aws.String(string(jsonBytes)),
 	})
 	if err != nil {
+		p.logger.Error("failed to publish book created message",
+			"error", err,
+			"bookId", book.ID,
+			"topicArn", p.topicARN,
+		)
 		return fmt.Errorf("publish SNS message: %w", err)
 	}
 
 	p.logger.Info("published book created message",
 		"bookId", book.ID,
 		"topicArn", p.topicARN,
+		"messageId", aws.ToString(resp.MessageId),
 	)
 
 	return nil
