@@ -30,6 +30,8 @@ import (
 	"github.com/example/bookapi/internal/service"
 )
 
+const deploymentMarker = "book-api-fargate-marker-2025-11-24"
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		slog.Error("failed to run server", "error", err)
@@ -43,6 +45,8 @@ func run(args []string) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
+
+	slog.Info("deployment marker reached", "marker", deploymentMarker, "pid", os.Getpid())
 
 	_ = godotenv.Load()
 
