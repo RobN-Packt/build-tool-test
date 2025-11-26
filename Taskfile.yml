@@ -1,0 +1,47 @@
+version: '3'
+
+vars:
+  FRONTEND_DIR: ./apps/web
+  BACKEND_DIR: ./apps/api
+  LAMBDA_DIR: ./apps/api/internal/lambda
+  DOCKER_IMAGE: your-aws-account.dkr.ecr.region.amazonaws.com/packt-books-api
+  ECS_SERVICE: books-api-service
+  ECS_CLUSTER: books-api-cluster
+  AWS_REGION: eu-west-1
+
+includes:
+  frontend: ./apps/web/Taskfile.yml
+  backend: ./apps/api/Taskfile.yml
+  lambda: ./apps/api/internal/lambda/Taskfile.yml
+
+tasks:
+  default:
+    cmds:
+      - task: help
+
+  help:
+    desc: List common tasks
+    cmds:
+      - |
+          echo "Frontend: task build | test | lint | dev | deploy"
+          echo "Backend:  task build  | test | lint | docker | deploy"
+          echo "Lambda:   task build   | test | deploy"
+          echo "Pipelines: task ci | task deploy"
+    silent: true
+
+  ci:
+    desc: Runs the full test and linting suite for all services.
+    deps:
+      - frontend:test
+      - frontend:lint
+
+  deploy:
+    desc: Deploy frontend to Vercel, backend to ECS, and Lambda (CI only)
+    deps:
+      - ci
+    preconditions:
+      - sh: '[ "${CI:-}" = "true" ]'
+        msg: "Deploy can only be run in CI (CI env var must be set)."
+    cmds:
+      - task frontend:deploy
+

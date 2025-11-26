@@ -5,3 +5,18 @@ apps/web/node_modules/
 .env
 .env.local
 *.log
+.task/
+
+# Node / Frontend
+node_modules/
+apps/web/.next/
+apps/web/.turbo/
+apps/web/.eslintcache
+apps/web/dist/
+
+# Backend
+apps/api/bin/
+
+# Lambda
+apps/api/internal/lambda/main
+apps/api/internal/lambda/main.zip

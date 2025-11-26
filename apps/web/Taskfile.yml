@@ -1,0 +1,41 @@
+version: '3'
+
+tasks:
+  install:
+    dir: "{{.FRONTEND_DIR}}"
+    desc: "Installs the packages and dependencies for the next.js frontend"
+    run: when_changed
+    cmds:
+      - npm install
+    sources:
+      - package.json
+      - package-lock.json
+    generates:
+      - node_modules
+
+  build:
+    dir: "{{.FRONTEND_DIR}}"
+    desc: "Builds the next.js frontend"
+    deps: [install]
+    cmds:
+      - npm run build
+
+  test:
+    dir: "{{.FRONTEND_DIR}}"
+    desc: "Runs the tests for the frontend"
+    deps: [install]
+    cmds:
+      - npm run test
+
+  lint:
+    dir: "{{.FRONTEND_DIR}}"
+    desc: "Runs the linter for the frontend"
+    deps: [install]
+    cmds:
+      - npm run lint
+
+  deploy-production:
+    dir: "{{.FRONTEND_DIR}}"
+    desc: "Deploys the frontend application to Vercel"
+    cmds:
+      - npx vercel deploy --prod
