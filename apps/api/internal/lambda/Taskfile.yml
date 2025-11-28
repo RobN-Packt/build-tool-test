@@ -3,10 +3,44 @@
 version: '3'
 
 vars:
-  GREETING: Hello, World!
+  LAMBDA_DIR: ./internal/lambda/bookemailer
+  LAMBDA_FUNCTION: built-tool-test-email
 
 tasks:
-  default:
+  lint:
+    desc: Lint Lambda code
+    dir: "{{.BACKEND_DIR}}"
     cmds:
-      - echo "{{.GREETING}}"
-    silent: true
+      - golangci-lint run ./{{.LAMBDA_DIR}}/...
+
+  test:
+    desc: Test Lambda code
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - go test ./{{.LAMBDA_DIR}}/...
+
+  build:
+    desc: Build Lambda binary
+    dir: "{{.BACKEND_DIR}}/{{.LAMBDA_DIR}}"
+    deps: [lint, test]
+    cmds:
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bootstrap .
+
+  zip:
+    desc: Zip Lambda binary
+    dir: "{{.BACKEND_DIR}}/{{.LAMBDA_DIR}}"
+    deps: [build]
+    cmds:
+      - zip deployment.zip bootstrap
+
+  deploy:
+    desc: Deploy Lambda
+    dir: "{{.BACKEND_DIR}}/{{.LAMBDA_DIR}}"
+    deps: [zip]
+    cmds:
+      - |
+          aws lambda update-function-code \
+            --function-name {{.LAMBDA_FUNCTION}} \
+            --zip-file fileb://deployment.zip \
+            --region {{.AWS_REGION}} \
+            --no-cli-pager

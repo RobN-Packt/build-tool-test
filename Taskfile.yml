@@ -46,6 +46,8 @@ tasks:
       - frontend:lint
       - backend:test
       - backend:lint
+      - lambda:test
+      - lambda:lint
 
   deploy:
     desc: Deploy frontend to Vercel, backend to ECS, and Lambda (CI only)
@@ -57,4 +59,5 @@ tasks:
     cmds:
       - task frontend:deploy
       - task backend:deploy
+      - task lambda:deploy
 

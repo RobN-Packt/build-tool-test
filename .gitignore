@@ -7,6 +7,8 @@ apps/web/node_modules/
 *.log
 .task/
 ecs-task-def.rendered.json
+bootstrap
+deployment.zip
 
 # Node / Frontend
 node_modules/
