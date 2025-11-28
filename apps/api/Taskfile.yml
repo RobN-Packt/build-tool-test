@@ -1,12 +1,61 @@
-# https://taskfile.dev
-
 version: '3'
 
-vars:
-  GREETING: Hello, World!
-
 tasks:
-  default:
+  tidy:
+    dir: "{{.BACKEND_DIR}}"
+    desc: Go mod tidy for the backend application
     cmds:
-      - echo "{{.GREETING}}"
-    silent: true
+      - go mod tidy
+
+  test:
+    dir: "{{.BACKEND_DIR}}"
+    desc: Run the tests for the backend application
+    deps: [tidy]
+    cmds:
+      - go test ./...
+
+  lint:
+    dir: "{{.BACKEND_DIR}}"
+    desc: Run the linter (golangci-lint) for the backend application
+    cmds:
+      - golangci-lint run
+
+  docker-build:
+    dir: "{{.BACKEND_DIR}}"
+    deps:
+    - test
+    - lint
+    desc: Build docker image for ECS
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} .
+
+  docker-push:
+    dir: "{{.BACKEND_DIR}}"
+    desc: Pushes the Docker image to the ecr
+    deps: [docker-build]
+    cmds:
+      - aws ecr get-login-password --region {{.AWS_REGION}} | docker login --username AWS --password-stdin {{.ECR_REGISTRY}}
+      - docker push {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
+
+  taskdef-register:
+    dir: "{{.BACKEND_DIR}}"
+    desc: Register a new task definition revision with the new image tag
+    deps: [docker-push]
+    cmds:
+      - sed 's/__IMAGE_TAG__/{{.DOCKER_TAG}}/g' ecs-task-def.json > ecs-task-def.rendered.json
+      - aws ecs register-task-definition --no-cli-pager --cli-input-json file://ecs-task-def.rendered.json --region {{.AWS_REGION}}
+
+  deploy:
+    dir: "{{.BACKEND_DIR}}"
+    desc: Deploys backend to ECS
+    deps: [taskdef-register]
+    cmds:
+      - |
+          aws ecs update-service \
+            --no-cli-pager \
+            --cluster {{.ECS_CLUSTER}} \
+            --service {{.ECS_SERVICE}} \
+            --task-definition build-tool-test \
+            --force-new-deployment \
+            --region {{.AWS_REGION}}
+

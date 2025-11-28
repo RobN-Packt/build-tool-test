@@ -1,0 +1,14 @@
+{
+  "family": "build-tool-test",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::750969166615:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "build-tool-test",
+      "image": "750969166615.dkr.ecr.eu-north-1.amazonaws.com/build-tool-test:__IMAGE_TAG__"
+    }
+  ]
+}

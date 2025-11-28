@@ -4,10 +4,20 @@ vars:
   FRONTEND_DIR: ./apps/web
   BACKEND_DIR: ./apps/api
   LAMBDA_DIR: ./apps/api/internal/lambda
-  DOCKER_IMAGE: your-aws-account.dkr.ecr.region.amazonaws.com/packt-books-api
-  ECS_SERVICE: books-api-service
-  ECS_CLUSTER: books-api-cluster
-  AWS_REGION: eu-west-1
+  GIT_SHA:
+    sh: git rev-parse --short HEAD
+  DOCKER_TAG: "{{.GIT_SHA}}"
+
+  AWS_ACCOUNT_ID: "750969166615"
+  AWS_REGION: eu-north-1
+
+  ECR_REPOSITORY: build-tool-test
+  ECR_REGISTRY: "{{.AWS_ACCOUNT_ID}}.dkr.ecr.{{.AWS_REGION}}.amazonaws.com"
+  DOCKER_IMAGE: "{{.ECR_REGISTRY}}/{{.ECR_REPOSITORY}}"
+
+  ECS_SERVICE: build-tool-test-service-excyce51
+  ECS_CLUSTER: build-tool-test
+
 
 includes:
   frontend: ./apps/web/Taskfile.yml
@@ -34,6 +44,8 @@ tasks:
     deps:
       - frontend:test
       - frontend:lint
+      - backend:test
+      - backend:lint
 
   deploy:
     desc: Deploy frontend to Vercel, backend to ECS, and Lambda (CI only)
@@ -44,4 +56,5 @@ tasks:
         msg: "Deploy can only be run in CI (CI env var must be set)."
     cmds:
       - task frontend:deploy
+      - task backend:deploy
 

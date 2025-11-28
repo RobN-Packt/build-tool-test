@@ -56,7 +56,10 @@ func TestBookCRUDIntegration(t *testing.T) {
 
 	createResp, err := client.Post(server.URL+"/books", "application/json", bytes.NewReader(createBody))
 	require.NoError(t, err)
-	defer createResp.Body.Close()
+	defer func() {
+		_ = createResp.Body.Close()
+	}()
+
 	require.Equal(t, http.StatusCreated, createResp.StatusCode)
 
 	var created bookResponse
@@ -69,7 +72,10 @@ func TestBookCRUDIntegration(t *testing.T) {
 
 	getResp, err := client.Get(server.URL + "/books/" + created.ID)
 	require.NoError(t, err)
-	defer getResp.Body.Close()
+	defer func() {
+		_ = getResp.Body.Close()
+	}()
+
 	require.Equal(t, http.StatusOK, getResp.StatusCode)
 
 	var fetched bookResponse
@@ -78,7 +84,9 @@ func TestBookCRUDIntegration(t *testing.T) {
 
 	listResp, err := client.Get(server.URL + "/books")
 	require.NoError(t, err)
-	defer listResp.Body.Close()
+	defer func() {
+		_ = listResp.Body.Close()
+	}()
 	require.Equal(t, http.StatusOK, listResp.StatusCode)
 
 	var listBody struct {
@@ -103,7 +111,9 @@ func TestBookCRUDIntegration(t *testing.T) {
 
 	updateResp, err := client.Do(updateReq)
 	require.NoError(t, err)
-	defer updateResp.Body.Close()
+	defer func() {
+		_ = updateResp.Body.Close()
+	}()
 	require.Equal(t, http.StatusOK, updateResp.StatusCode)
 
 	var updated bookResponse
@@ -116,12 +126,16 @@ func TestBookCRUDIntegration(t *testing.T) {
 	require.NoError(t, err)
 	deleteResp, err := client.Do(deleteReq)
 	require.NoError(t, err)
-	defer deleteResp.Body.Close()
+	defer func() {
+		_ = deleteResp.Body.Close()
+	}()
 	require.Equal(t, http.StatusNoContent, deleteResp.StatusCode)
 
 	finalGetResp, err := client.Get(server.URL + "/books/" + created.ID)
 	require.NoError(t, err)
-	defer finalGetResp.Body.Close()
+	defer func() {
+		_ = finalGetResp.Body.Close()
+	}()
 	require.Equal(t, http.StatusNotFound, finalGetResp.StatusCode)
 }
 
@@ -132,7 +146,9 @@ func TestHealthEndpoint(t *testing.T) {
 
 	resp, err := http.Get(server.URL + "/healthz")
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
@@ -143,7 +159,9 @@ func TestOpenAPIExposed(t *testing.T) {
 
 	resp, err := http.Get(server.URL + "/openapi.json")
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	require.Contains(t, resp.Header.Get("Content-Type"), "openapi+json")
 }

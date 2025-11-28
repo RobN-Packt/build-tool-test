@@ -34,8 +34,8 @@ tasks:
     cmds:
       - npm run lint
 
-  deploy-production:
+  deploy:
     dir: "{{.FRONTEND_DIR}}"
     desc: "Deploys the frontend application to Vercel"
     cmds:
-      - npx vercel deploy --prod
+      - npx vercel deploy --prod --yes
