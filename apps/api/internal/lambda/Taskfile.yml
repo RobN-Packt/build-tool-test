@@ -1,6 +1,7 @@
-# https://taskfile.dev
-
 version: '3'
+
+# If the task file is run via the root task file, the dir attribute is required to prevent the task file being run from the root.
+# It is not required when running the task file directly as opposed as from root.
 
 vars:
   LAMBDA_DIR: ./internal/lambda/bookemailer

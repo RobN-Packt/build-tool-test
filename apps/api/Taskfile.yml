@@ -1,5 +1,19 @@
 version: '3'
 
+# If the task file is run via the root task file, the dir attribute is required to prevent the task file being run from the root.
+# It is not required when running the task file directly as opposed as from root.
+
+vars:
+  AWS_ACCOUNT_ID: "750969166615"
+  ECR_REPOSITORY: build-tool-test
+  ECR_REGISTRY: "{{.AWS_ACCOUNT_ID}}.dkr.ecr.{{.AWS_REGION}}.amazonaws.com"
+  DOCKER_IMAGE: "{{.ECR_REGISTRY}}/{{.ECR_REPOSITORY}}"
+  GIT_SHA:
+    sh: git rev-parse --short HEAD
+  DOCKER_TAG: "{{.GIT_SHA}}"
+  ECS_SERVICE: build-tool-test-service-excyce51
+  ECS_CLUSTER: build-tool-test
+
 tasks:
   tidy:
     dir: "{{.BACKEND_DIR}}"
@@ -22,10 +36,8 @@ tasks:
 
   docker-build:
     dir: "{{.BACKEND_DIR}}"
-    deps:
-    - test
-    - lint
     desc: Build docker image for ECS
+    deps: [test, lint]
     cmds:
       - docker build -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} .
 

@@ -1,5 +1,11 @@
 version: '3'
 
+# If the task file is run via the root task file, the dir attribute is required to prevent the task file being run from the root.
+# It is not required when running the task file directly as opposed as from root.
+
+vars:
+  FRONTEND_DIR: ./apps/web
+
 tasks:
   install:
     dir: "{{.FRONTEND_DIR}}"
