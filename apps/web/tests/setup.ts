@@ -1,3 +1,4 @@
-import '@testing-library/jest-dom/vitest';
+import matchers from '@testing-library/jest-dom/matchers';
+import { expect } from 'vitest';
 
-// Add setup here
+expect.extend(matchers);

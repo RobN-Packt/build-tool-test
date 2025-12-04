@@ -1,0 +1,48 @@
+module(
+    name = "book_monorepo",
+    version = "0.1.0",
+)
+
+bazel_dep(name = "aspect_bazel_lib", version = "2.7.7")
+bazel_dep(name = "aspect_rules_js", version = "2.0.2")
+bazel_dep(name = "aspect_rules_lint", version = "1.10.2")
+bazel_dep(name = "aspect_rules_ts", version = "3.1.0")
+bazel_dep(name = "bazel_skylib", version = "1.8.1")
+bazel_dep(name = "rules_nodejs", version = "6.6.2")
+bazel_dep(name = "rules_pkg", version = "0.9.1")
+
+single_version_override(
+    module_name = "rules_pkg",
+    version = "0.9.1",
+)
+
+single_version_override(
+    module_name = "aspect_bazel_lib",
+    version = "2.7.7",
+)
+
+
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
+node.toolchain(node_version = "20.18.0")
+
+pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm", dev_dependency = True)
+use_repo(pnpm, "pnpm")
+
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
+npm.npm_translate_lock(
+    name = "npm",
+    npm_package_lock = "//apps/web:package-lock.json",
+    root_package = "apps/web",
+    pnpm_lock = "//apps/web:pnpm-lock.yaml",
+    generate_bzl_library_targets = True,
+    verify_node_modules_ignored = "//:.bazelignore",
+)
+use_repo(npm, "npm")
+
+rules_ts_ext = use_extension(
+    "@aspect_rules_ts//ts:extensions.bzl",
+    "ext",
+    dev_dependency = True,
+)
+rules_ts_ext.deps()
+use_repo(rules_ts_ext, "npm_typescript")

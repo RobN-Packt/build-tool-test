@@ -54,6 +54,20 @@ pnpm --filter book-web build
 pnpm --filter book-web start
 ```
 
+## Bazel Workflow
+
+```bash
+# run lint + vitest + a smoke build in one go
+bazel test //apps/web:ci
+
+# produce the Lambda-ready archive (.next standalone build + static assets)
+bazel build //apps/web:lambda_bundle
+```
+
+The resulting bundle lives at `bazel-bin/apps/web/book-web-lambda.zip`. It contains the
+`.next/standalone` server output plus static assets so it can be uploaded to
+AWS Lambda or any other serverless runtime without extra scripting.
+
 ## Docker
 
 ```bash

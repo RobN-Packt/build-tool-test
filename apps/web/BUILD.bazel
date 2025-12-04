@@ -1,0 +1,135 @@
+load("@aspect_rules_js//js:defs.bzl", "js_binary", "js_library")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@npm//apps/web:eslint/package_json.bzl", eslint_pkg = "bin")
+load("@npm//apps/web:next/package_json.bzl", next_pkg = "bin")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
+load("//apps/web:next_defs.bzl", "next_app")
+load("//apps/web:vitest_defs.bzl", "vitest_tests")
+
+package(default_visibility = ["//visibility:public"])
+
+npm_link_all_packages(name = "node_modules")
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+)
+
+filegroup(
+    name = "web_srcs",
+    srcs = glob(
+        [
+            "app/**",
+            "components/**",
+            "lib/**",
+            "tests/**",
+            "public/**",
+            "*.ts",
+            "*.tsx",
+            "*.js",
+            "*.cjs",
+            "*.mjs",
+            "*.jsx",
+            "*.json",
+            "*.css",
+        ],
+        exclude = [
+            "node_modules/**",
+            ".next/**",
+            ".turbo/**",
+            "dist/**",
+        ],
+    ),
+)
+
+filegroup(
+    name = "public_assets",
+    srcs = glob(["public/**"], exclude = ["public/.gitkeep"]),
+)
+
+js_library(
+    name = "eslint_config",
+    srcs = [".eslintrc.json"],
+    deps = [
+        ":node_modules/eslint",
+        ":node_modules/eslint-config-next",
+        ":node_modules/typescript",
+    ],
+)
+
+eslint_pkg.eslint_test(
+    name = "lint",
+    data = [
+        ":node_modules",
+        ":web_srcs",
+        ".eslintrc.json",
+        "tsconfig.json",
+    ],
+    args = [
+        "--max-warnings=0",
+        "--ext",
+        "ts,tsx,js,jsx",
+        "--ignore-pattern",
+        "vitest.config.mjs",
+        ".",
+    ],
+    chdir = "apps/web",
+)
+
+js_binary(
+    name = "next_build_wrapper",
+    entry_point = "scripts/next-build.mjs",
+    data = [
+        ":node_modules",
+    ],
+)
+
+next_app(
+    name = "next_app",
+    srcs = [":web_srcs"],
+    data = [
+        ":node_modules",
+        "next.config.js",
+        "package.json",
+        "tsconfig.json",
+        "vitest.config.mjs",
+    ],
+    next_bin = "./node_modules/.bin/next",
+    next_js_binary = ":next_build_wrapper",
+)
+
+vitest_tests(
+    name = "unit_tests",
+    config = ":vitest.config.mjs",
+    deps = [":web_srcs"],
+    size = "medium",
+)
+
+pkg_zip(
+    name = "lambda_bundle",
+    out = "book-web-lambda.zip",
+    srcs = [
+        ":next_app",
+        ":public_assets",
+        "package.json",
+        "next.config.js",
+    ],
+    package_dir = ".",
+    strip_prefix = "apps/web",
+)
+
+build_test(
+    name = "release_build_test",
+    targets = [":lambda_bundle"],
+)
+
+test_suite(
+    name = "ci",
+    tests = [
+        ":lint",
+        ":unit_tests",
+        ":release_build_test",
+    ],
+)
