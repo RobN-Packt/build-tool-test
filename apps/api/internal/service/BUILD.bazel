@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "service",
+    srcs = ["book.go"],
+    importpath = "github.com/example/bookapi/internal/service",
+    visibility = ["//apps/api:__subpackages__"],
+    deps = [
+        "//apps/api/internal/domain",
+        "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_test(
+    name = "service_test",
+    srcs = ["book_test.go"],
+    embed = [":service"],
+    deps = [
+        "//apps/api/internal/domain",
+        "//apps/api/internal/repo",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//require",
+    ],
+)

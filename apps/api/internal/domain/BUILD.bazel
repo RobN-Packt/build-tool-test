@@ -1,0 +1,9 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "domain",
+    srcs = ["book.go"],
+    importpath = "github.com/example/bookapi/internal/domain",
+    visibility = ["//apps/api:__subpackages__"],
+    deps = ["@com_github_google_uuid//:uuid"],
+)

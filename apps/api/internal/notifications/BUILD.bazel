@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "notifications",
+    srcs = ["sns.go"],
+    importpath = "github.com/example/bookapi/internal/notifications",
+    visibility = ["//apps/api:__subpackages__"],
+    deps = [
+        "//apps/api/internal/domain",
+        "@com_github_aws_aws_sdk_go_v2//aws",
+        "@com_github_aws_aws_sdk_go_v2_service_sns//:sns",
+    ],
+)

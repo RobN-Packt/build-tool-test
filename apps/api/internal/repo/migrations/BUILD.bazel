@@ -1,0 +1,9 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "migrations",
+    srcs = ["migrations.go"],
+    embedsrcs = ["001_init.sql"],
+    importpath = "github.com/example/bookapi/internal/repo/migrations",
+    visibility = ["//apps/api:__subpackages__"],
+)

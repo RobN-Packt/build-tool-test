@@ -1,0 +1,6 @@
+# Enables Bzlmod for Bazel.
+# Bzlmod is Bazel's module system, offering an easier way to manage external dependencies with less code.
+
+build --enable_bzlmod
+test --enable_bzlmod
+run --enable_bzlmod

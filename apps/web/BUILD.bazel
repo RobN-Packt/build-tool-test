@@ -1,0 +1,69 @@
+load("@aspect_rules_js//js:defs.bzl", "js_binary")
+# load("@aspect_rules_js//eslint:defs.bzl", "eslint_test")
+
+package(default_visibility = ["//visibility:public"])
+
+js_binary(
+    name = "next_build",
+    entry_point = "next",
+    args = ["build", "apps/web"],
+    node_modules = "@npm//:node_modules",
+    data = [
+        "package.json",
+        "next.config.mjs",
+        "tsconfig.json",
+        ".eslintrc.js",
+        "app",
+        "pages",
+        "components",
+        "lib",
+        "public",
+        "styles",
+    ],
+)
+
+# eslint_test(
+#     name = "next_lint",
+#     srcs = glob([
+#         "app/**/*.ts",
+#         "app/**/*.tsx",
+#         "pages/**/*.ts",
+#         "pages/**/*.tsx",
+#         "components/**/*.ts",
+#         "components/**/*.tsx",
+#         "lib/**/*.ts",
+#         "lib/**/*.tsx",
+#         "app/**/*.js",
+#         "app/**/*.jsx",
+#         "pages/**/*.js",
+#         "pages/**/*.jsx",
+#         "components/**/*.js",
+#         "components/**/*.jsx",
+#         "lib/**/*.js",
+#         "lib/**/*.jsx",
+#     ]),
+#     eslint_config = ".eslintrc.js",
+#     node_modules = "@npm//:node_modules",
+#     data = [
+#         "package.json",
+#         ".eslintrc.js",
+#         "tsconfig.json",
+#         "next.config.mjs",
+#     ],
+# )
+
+# jest_test(
+#     name = "next_test",
+#     jest_config = "jest.config.cjs",
+#     node_modules = "@npm//:node_modules",
+#     data = [
+#         "package.json",
+#         "jest.config.cjs",
+#         "tsconfig.json",
+#         "next.config.mjs",
+#         "app",
+#         "pages",
+#         "components",
+#         "lib",
+#     ],
+# )

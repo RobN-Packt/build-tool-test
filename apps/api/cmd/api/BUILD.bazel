@@ -1,0 +1,43 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "api_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/example/bookapi/cmd/api",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//apps/api/internal/http/handlers",
+        "//apps/api/internal/http/middleware",
+        "//apps/api/internal/notifications",
+        "//apps/api/internal/repo",
+        "//apps/api/internal/repo/migrations",
+        "//apps/api/internal/service",
+        "@com_github_aws_aws_sdk_go_v2_config//:config",
+        "@com_github_aws_aws_sdk_go_v2_service_sns//:sns",
+        "@com_github_danielgtaylor_huma_v2//:huma",
+        "@com_github_danielgtaylor_huma_v2//adapters/humamux",
+        "@com_github_gorilla_mux//:mux",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_joho_godotenv//:godotenv",
+    ],
+)
+
+go_binary(
+    name = "api",
+    embed = [":api_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "api_test",
+    srcs = [
+        "main_config_test.go",
+        "main_test.go",
+    ],
+    embed = [":api_lib"],
+    deps = [
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_stretchr_testify//require",
+    ],
+)
