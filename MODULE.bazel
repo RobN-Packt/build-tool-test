@@ -36,11 +36,8 @@ npm.npm_translate_lock(
     verify_node_modules_ignored = "//:.bazelignore",
 )
 
-npm.link_package(
-    name = "npm_web",
-    package_json = "//apps/web:package.json",
-)
-use_repo(npm, "npm", "npm_web")
+npm.link_all_packages(name = "npm_linked")
+use_repo(npm, "npm", "npm_linked")
 
 # rules_oci = rules for performing actions on OCI containers e.g. Docker
 bazel_dep(name = "rules_oci", version = "2.2.6")
