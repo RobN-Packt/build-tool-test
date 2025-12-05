@@ -49,7 +49,7 @@ js_test(
         ":config_files",
         ":test_sources",
         ":web_sources",
-        "@npm_linked//apps/web:node_modules",
+        "@npm//apps/web:node_modules",
     ],
     env = {
         "NEXT_TELEMETRY_DISABLED": "1",
@@ -70,7 +70,7 @@ js_test(
         ":config_files",
         ":test_sources",
         ":web_sources",
-        "@npm_linked//apps/web:node_modules",
+        "@npm//apps/web:node_modules",
     ],
     env = {
         "NODE_ENV": "test",
@@ -96,7 +96,7 @@ js_binary(
         ":config_files",
         ":test_sources",
         ":web_sources",
-        "@npm_linked//apps/web:node_modules",
+        "@npm//apps/web:node_modules",
     ],
     env = {
         "NEXT_TELEMETRY_DISABLED": "1",
