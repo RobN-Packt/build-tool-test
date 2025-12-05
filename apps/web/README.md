@@ -54,6 +54,24 @@ pnpm --filter book-web build
 pnpm --filter book-web start
 ```
 
+## Bazel
+
+The repository is configured with Bazel + Bzlmod so CI/CD pipelines can rely on
+fully reproducible builds:
+
+```bash
+# lint + unit/integration tests
+bazel test //apps/web:ci
+
+# Next.js standalone build ready for a Lambda deployment package
+bazel run //apps/web:next_build
+```
+
+The `next_build` target emits the `.next` standalone output inside
+`bazel-bin/apps/web/next_build.runfiles/__main__/apps/web/.next`. Package the
+`standalone`, `static`, and `public` directories from that location when
+assembling a Lambda bundle.
+
 ## Docker
 
 ```bash

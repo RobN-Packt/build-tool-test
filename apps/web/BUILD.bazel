@@ -1,69 +1,109 @@
-load("@aspect_rules_js//js:defs.bzl", "js_binary")
-# load("@aspect_rules_js//eslint:defs.bzl", "eslint_test")
+load("@aspect_rules_js//js:defs.bzl", "js_binary", "js_test")
 
 package(default_visibility = ["//visibility:public"])
 
-js_binary(
-    name = "next_build",
-    entry_point = "next",
-    args = ["build", "apps/web"],
-    node_modules = "@npm//:node_modules",
-    data = [
+filegroup(
+    name = "web_sources",
+    srcs = glob(
+        [
+            "app/**/*",
+            "components/**/*",
+            "lib/**/*",
+            "public/**/*",
+        ],
+        exclude = ["**/*.md"],
+    ),
+)
+
+filegroup(
+    name = "test_sources",
+    srcs = glob(
+        [
+            "tests/**/*",
+        ],
+    ),
+)
+
+filegroup(
+    name = "config_files",
+    srcs = [
+        ".eslintrc.json",
+        "next-env.d.ts",
+        "next.config.js",
         "package.json",
-        "next.config.mjs",
         "tsconfig.json",
-        ".eslintrc.js",
-        "app",
-        "pages",
-        "components",
-        "lib",
-        "public",
-        "styles",
+        "vitest.config.js",
+        "tools/run_next.cjs",
+        "tools/run_vitest.cjs",
     ],
 )
 
-# eslint_test(
-#     name = "next_lint",
-#     srcs = glob([
-#         "app/**/*.ts",
-#         "app/**/*.tsx",
-#         "pages/**/*.ts",
-#         "pages/**/*.tsx",
-#         "components/**/*.ts",
-#         "components/**/*.tsx",
-#         "lib/**/*.ts",
-#         "lib/**/*.tsx",
-#         "app/**/*.js",
-#         "app/**/*.jsx",
-#         "pages/**/*.js",
-#         "pages/**/*.jsx",
-#         "components/**/*.js",
-#         "components/**/*.jsx",
-#         "lib/**/*.js",
-#         "lib/**/*.jsx",
-#     ]),
-#     eslint_config = ".eslintrc.js",
-#     node_modules = "@npm//:node_modules",
-#     data = [
-#         "package.json",
-#         ".eslintrc.js",
-#         "tsconfig.json",
-#         "next.config.mjs",
-#     ],
-# )
+js_test(
+    name = "lint",
+    entry_point = "tools/run_next.cjs",
+    args = [
+        "lint",
+        "apps/web",
+    ],
+    data = [
+        ":config_files",
+        ":test_sources",
+        ":web_sources",
+        "@npm_linked//apps/web:node_modules",
+    ],
+    env = {
+        "NEXT_TELEMETRY_DISABLED": "1",
+    },
+)
 
-# jest_test(
-#     name = "next_test",
-#     jest_config = "jest.config.cjs",
-#     node_modules = "@npm//:node_modules",
-#     data = [
-#         "package.json",
-#         "jest.config.cjs",
-#         "tsconfig.json",
-#         "next.config.mjs",
-#         "app",
-#         "pages",
-#         "components",
-#         "lib",
-#     ],
-# )
+js_test(
+    name = "vitest",
+    entry_point = "tools/run_vitest.cjs",
+    args = [
+        "run",
+        "--config",
+        "apps/web/vitest.config.js",
+        "--root",
+        "apps/web",
+    ],
+    data = [
+        ":config_files",
+        ":test_sources",
+        ":web_sources",
+        "@npm_linked//apps/web:node_modules",
+    ],
+    env = {
+        "NODE_ENV": "test",
+    },
+)
+
+test_suite(
+    name = "ci",
+    tests = [
+        ":lint",
+        ":vitest",
+    ],
+)
+
+js_binary(
+    name = "next_build",
+    entry_point = "tools/run_next.cjs",
+    args = [
+        "build",
+        "apps/web",
+    ],
+    data = [
+        ":config_files",
+        ":test_sources",
+        ":web_sources",
+        "@npm_linked//apps/web:node_modules",
+    ],
+    env = {
+        "NEXT_TELEMETRY_DISABLED": "1",
+    },
+)
+
+alias(
+    name = "web",
+    actual = ":ci",
+)
