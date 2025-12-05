@@ -49,6 +49,7 @@ js_test(
         ":config_files",
         ":test_sources",
         ":web_sources",
+        "@npm//:node_modules",
     ],
     deps = ["@npm//:node_modules"],
     env = {
@@ -70,6 +71,7 @@ js_test(
         ":config_files",
         ":test_sources",
         ":web_sources",
+        "@npm//:node_modules",
     ],
     deps = ["@npm//:node_modules"],
     env = {
@@ -96,6 +98,7 @@ js_binary(
         ":config_files",
         ":test_sources",
         ":web_sources",
+        "@npm//:node_modules",
     ],
     deps = ["@npm//:node_modules"],
     env = {
