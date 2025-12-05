@@ -38,7 +38,7 @@ filegroup(
 
 js_test(
     name = "lint",
-    entry_point = "@npm//next/bin:next",
+    entry_point = "@npm//apps/web/.bin:next",
     args = [
         "lint",
         "apps/web",
@@ -55,7 +55,7 @@ js_test(
 
 js_test(
     name = "vitest",
-    entry_point = "@npm//vitest/bin:vitest",
+    entry_point = "@npm//apps/web/.bin:vitest",
     args = [
         "run",
         "--config",
@@ -83,7 +83,7 @@ test_suite(
 
 js_binary(
     name = "next_build",
-    entry_point = "@npm//next/bin:next",
+    entry_point = "@npm//apps/web/.bin:next",
     args = [
         "build",
         "apps/web",
