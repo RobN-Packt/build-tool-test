@@ -33,12 +33,14 @@ filegroup(
         "package.json",
         "tsconfig.json",
         "vitest.config.js",
+        "tools/run_next.cjs",
+        "tools/run_vitest.cjs",
     ],
 )
 
 js_test(
     name = "lint",
-    entry_point = "@npm//apps/web/.bin:next",
+    entry_point = "tools/run_next.cjs",
     args = [
         "lint",
         "apps/web",
@@ -48,6 +50,7 @@ js_test(
         ":test_sources",
         ":web_sources",
     ],
+    deps = ["@npm//:node_modules"],
     env = {
         "NEXT_TELEMETRY_DISABLED": "1",
     },
@@ -55,7 +58,7 @@ js_test(
 
 js_test(
     name = "vitest",
-    entry_point = "@npm//apps/web/.bin:vitest",
+    entry_point = "tools/run_vitest.cjs",
     args = [
         "run",
         "--config",
@@ -68,6 +71,7 @@ js_test(
         ":test_sources",
         ":web_sources",
     ],
+    deps = ["@npm//:node_modules"],
     env = {
         "NODE_ENV": "test",
     },
@@ -83,7 +87,7 @@ test_suite(
 
 js_binary(
     name = "next_build",
-    entry_point = "@npm//apps/web/.bin:next",
+    entry_point = "tools/run_next.cjs",
     args = [
         "build",
         "apps/web",
@@ -93,6 +97,7 @@ js_binary(
         ":test_sources",
         ":web_sources",
     ],
+    deps = ["@npm//:node_modules"],
     env = {
         "NEXT_TELEMETRY_DISABLED": "1",
     },
