@@ -24,7 +24,7 @@ go_sdk.nogo(nogo = "@//apps/api:default_nogo",)
 
 # aspect_rules_js = rules for performing actions (building, testing, linting, etc.) for JavaScript / TypeScript
 # using Node.js and npm.
-bazel_dep(name = "aspect_rules_js", version = "3.18.1")
+bazel_dep(name = "aspect_rules_js", version = "3.7.0")
 bazel_dep(name = "rules_nodejs", version = "6.3.0")
 bazel_dep(name = "aspect_rules_jest", version = "0.24.0")
 
