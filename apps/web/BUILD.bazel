@@ -51,7 +51,6 @@ js_test(
     env = {
         "NEXT_TELEMETRY_DISABLED": "1",
     },
-    node_modules = "@npm//:node_modules",
 )
 
 js_test(
@@ -72,7 +71,6 @@ js_test(
     env = {
         "NODE_ENV": "test",
     },
-    node_modules = "@npm//:node_modules",
 )
 
 test_suite(
@@ -98,5 +96,9 @@ js_binary(
     env = {
         "NEXT_TELEMETRY_DISABLED": "1",
     },
-    node_modules = "@npm//:node_modules",
+)
+
+alias(
+    name = "web",
+    actual = ":ci",
 )
