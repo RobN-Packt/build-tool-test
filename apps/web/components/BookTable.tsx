@@ -1,5 +1,6 @@
-import { Book } from '@/lib/api';
 import { BookActions } from './BookActions';
+
+import { Book } from '@/lib/api';
 
 interface BookTableProps {
   books: Book[];

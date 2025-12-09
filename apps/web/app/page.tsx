@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { listBooks } from '@/lib/api';
+
 import { BookTable } from '@/components/BookTable';
+import { listBooks } from '@/lib/api';
 
 export const revalidate = 0;
 

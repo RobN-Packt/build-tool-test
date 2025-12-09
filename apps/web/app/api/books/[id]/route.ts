@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server';
+
 import { proxyRequest } from '../proxy';
 
-type RouteContext = {
+interface RouteContext {
   params: {
     id: string;
   };
-};
+}
 
 function buildPath(id: string) {
   return `/books/${encodeURIComponent(id)}`;
