@@ -1,4 +1,5 @@
 import createClient from 'openapi-fetch';
+
 import type { paths, components } from './types';
 
 const publicBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
