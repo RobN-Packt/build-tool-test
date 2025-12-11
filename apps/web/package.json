@@ -33,6 +33,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.12.0",
     "jsdom": "^24.0.0",
+    "undici": "^5.29.0",
     "typescript": "^5.4.5",
     "typescript-eslint": "^8.12.2",
     "vitest": "^1.6.0"
