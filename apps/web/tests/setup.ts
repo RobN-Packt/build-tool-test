@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom/vitest';
+import '@testing-library/jest-dom';
 
 // Vitest's jsdom environment does not ship the WHATWG fetch classes in Node.
 // Polyfill them using undici so libraries like openapi-fetch can construct Requests.
@@ -19,3 +19,4 @@ if (!globalThis.Request) {
 if (!globalThis.Response) {
   globalThis.Response = Response;
 }
+

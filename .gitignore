@@ -23,3 +23,13 @@ apps/api/bin/
 # Lambda
 apps/api/internal/lambda/main
 apps/api/internal/lambda/main.zip
+
+
+
+.nx/cache
+.nx/workspace-data
+vitest.config.*.timestamp*
+
+# Next.js
+.next
+out
