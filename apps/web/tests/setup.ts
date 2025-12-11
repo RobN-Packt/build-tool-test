@@ -1,3 +1,7 @@
 import '@testing-library/jest-dom/vitest';
+import { fetch, Headers, Request, Response } from 'undici';
 
-// Add setup here
+globalThis.fetch = fetch;
+globalThis.Headers = Headers;
+globalThis.Request = Request;
+globalThis.Response = Response;
