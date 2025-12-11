@@ -13,10 +13,9 @@
             }
         },
         "test": {
-            "executor": "@nx/jest:jest",
+            "executor": "nx:run-commands",
             "options": {
-                "jestConfig": "apps/web/jest.config.ts",
-                "passWithNoTests": false
+                "command": "pnpm --filter book-web test"
             }
         }
     },
