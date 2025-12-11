@@ -1,9 +1,18 @@
 import '@testing-library/jest-dom';
+import { TextDecoder, TextEncoder } from 'node:util';
+
+// Ensure WHATWG text encoders exist before loading undici, which expects them.
+if (!globalThis.TextEncoder) {
+  globalThis.TextEncoder = TextEncoder;
+}
+
+if (!globalThis.TextDecoder) {
+  globalThis.TextDecoder = TextDecoder;
+}
 
 // Vitest's jsdom environment does not ship the WHATWG fetch classes in Node.
-// Polyfill them using undici so libraries like openapi-fetch can construct Requests.
-import { fetch as undiciFetch, Headers, Request, Response } from 'undici';
-import { TextDecoder, TextEncoder } from 'node:util';
+// Load undici *after* TextEncoder/TextDecoder are available so it can polyfill.
+const { fetch: undiciFetch, Headers, Request, Response } = await import('undici');
 
 if (!globalThis.fetch) {
   globalThis.fetch = undiciFetch;
@@ -21,11 +30,4 @@ if (!globalThis.Response) {
   globalThis.Response = Response;
 }
 
-if (!globalThis.TextEncoder) {
-  globalThis.TextEncoder = TextEncoder;
-}
-
-if (!globalThis.TextDecoder) {
-  globalThis.TextDecoder = TextDecoder;
-}
 
