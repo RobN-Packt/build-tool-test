@@ -5,7 +5,7 @@ Minimal Next.js app for managing books via the Book API.
 ## Requirements
 
 - Node.js 18+
-- Running Book API (default upstream: `http://localhost:8080`, configurable via `API_SERVER_BASE_URL`)
+- Running Book API (default upstream: `http://localhost:8080`, configurable via `API_SERVER_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL`)
 
 ## Setup
 
@@ -22,7 +22,7 @@ cp .env.example .env.local
 The web app exposes `app/api/books` route handlers that forward requests to the Go API.
 
 - Browser requests automatically target `https://<ui>/api/books/...`, eliminating mixed-content issues.
-- Server components and route handlers still call `API_SERVER_BASE_URL` directly.
+- Route handlers proxy to `API_SERVER_BASE_URL` (or `NEXT_PUBLIC_API_BASE_URL` as a fallback).
 - If you prefer to skip the proxy (for example, when pointing to a public HTTPS load balancer), set
   `NEXT_PUBLIC_API_BASE_URL` to that absolute URL.
 

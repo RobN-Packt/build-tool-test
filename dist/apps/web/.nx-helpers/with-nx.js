@@ -19,7 +19,7 @@ function regexEqual(x, y) {
  */
 function getWithNxContext() {
 return {
-workspaceRoot: '/Users/packt/Documents/GitHub/build-tool-test',
+workspaceRoot: '/workspace',
 libsDir: 'libs'
 }
 }
