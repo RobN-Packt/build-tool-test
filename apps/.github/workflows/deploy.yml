@@ -1,0 +1,151 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  changes:
+    name: Detect changed projects
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend:  ${{ steps.filter.outputs.backend }}
+      lambda:   ${{ steps.filter.outputs.lambda }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'apps/web/**'
+              - 'Taskfile.yml'
+              - '.github/workflows/**'
+            backend:
+              - 'apps/api/**'
+              - '!apps/api/internal/lambda/**'
+              - 'Taskfile.yml'
+              - '.github/workflows/**'
+            lambda:
+              - 'apps/api/internal/lambda/**'
+              - 'Taskfile.yml'
+              - '.github/workflows/**'
+
+  frontend_deploy:
+    name: Frontend deploy (Vercel)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # add ORG/PROJECT envs here if you use them:
+      # VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      # VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'apps/web/package-lock.json'
+
+      - name: Install Task
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+          sudo mv ./bin/task /usr/local/bin/task
+
+      # Explicit build + tests here so the deploy step is "pure deploy"
+      - name: Frontend lint
+        run: task frontend:lint
+
+      - name: Frontend tests
+        run: task frontend:test
+
+      - name: Frontend build
+        run: task frontend:build
+
+      - name: Frontend deploy
+        run: task frontend:deploy
+
+  backend_deploy:
+    name: Backend deploy (ECS/Fargate)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: eu-north-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Task
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+          sudo mv ./bin/task /usr/local/bin/task
+
+      - name: Install golangci-lint
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      # backend:deploy already runs test + lint via deps (docker-build)
+      # So this single call covers test + lint + build + push + ECS update
+      - name: Backend deploy
+        run: task backend:deploy
+
+  lambda_deploy:
+    name: Lambda deploy
+    needs: changes
+    if: needs.changes.outputs.lambda == 'true'
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: eu-north-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Task
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+          sudo mv ./bin/task /usr/local/bin/task
+
+      - name: Install golangci-lint
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      # lambda:deploy includes lint + test + build + zip inside deps
+      - name: Lambda deploy
+        run: task lambda:deploy

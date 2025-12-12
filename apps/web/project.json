@@ -17,6 +17,14 @@
             "options": {
                 "command": "pnpm --filter book-web test"
             }
+        },
+        "build": {
+            "executor": "@nx/next:build",
+            "outputs": ["{projectRoot}/.next"],
+            "options": {
+                "root": "apps/web",
+                "outputPath": "dist/apps/web"
+            }
         }
     },
     "tags": []

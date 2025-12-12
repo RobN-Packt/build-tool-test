@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  changes:
+    name: Detect changed projects
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend:  ${{ steps.filter.outputs.backend }}
+      lambda:   ${{ steps.filter.outputs.lambda }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'apps/web/**'
+              - 'Taskfile.yml'
+              - '.github/workflows/**'
+            backend:
+              - 'apps/api/**'
+              - '!apps/api/internal/lambda/**'
+              - 'Taskfile.yml'
+              - '.github/workflows/**'
+            lambda:
+              - 'apps/api/internal/lambda/**'
+              - 'Taskfile.yml'
+              - '.github/workflows/**'
+
+  frontend_ci:
+    name: Frontend lint & test
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'apps/web/package-lock.json'
+
+      - name: Install Task
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+          sudo mv ./bin/task /usr/local/bin/task
+
+      - name: Frontend lint
+        run: task frontend:lint
+
+      - name: Frontend tests
+        run: task frontend:test
+
+  backend_ci:
+    name: Backend lint & test
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22' # or whatever you use
+
+      - name: Install Task
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+          sudo mv ./bin/task /usr/local/bin/task
+
+      - name: Install golangci-lint
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Backend lint
+        run: task backend:lint
+
+      - name: Backend tests
+        run: task backend:test
+
+  lambda_ci:
+    name: Lambda lint & test
+    needs: changes
+    if: needs.changes.outputs.lambda == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22' # match backend
+
+      - name: Install Task
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+          sudo mv ./bin/task /usr/local/bin/task
+
+      - name: Install golangci-lint
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Lambda lint
+        run: task lambda:lint
+
+      - name: Lambda tests
+        run: task lambda:test

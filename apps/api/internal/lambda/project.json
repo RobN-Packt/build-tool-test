@@ -1,0 +1,44 @@
+{
+  "name": "lambda",
+  "root": "apps/api/internal/lambda",
+  "sourceRoot": "apps/api/internal/lambda",
+  "projectType": "application",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "golangci-lint run ./...",
+        "cwd": "apps/api/internal/lambda"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test ./...",
+        "cwd": "apps/api/internal/lambda"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/api/internal/lambda/bookemailer",
+        "command": "GOOS=linux GOARCH=amd64 go build -o dist/bootstrap ."
+      },
+      "outputs": [
+        "{workspaceRoot}/apps/api/internal/lambda/bookemailer/dist"
+      ]
+    },
+    "package-zip": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/api/internal/lambda/bookemailer",
+        "command": "mkdir -p dist && cd dist && zip function.zip bootstrap"
+      },
+      "dependsOn": ["build"],
+      "outputs": [
+        "{workspaceRoot}/apps/api/internal/lambda/bookemailer/dist/function.zip"
+      ]
+    }
+  },
+  "tags": ["type:lambda"]
+}
