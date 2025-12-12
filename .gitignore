@@ -33,3 +33,5 @@ vitest.config.*.timestamp*
 # Next.js
 .next
 out
+.vercel
+.env*.local
