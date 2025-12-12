@@ -1,7 +1,11 @@
-name: Deploy
+name: CI
 
 on:
+  workflow_dispatch:
   push:
+    branches-ignore:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -36,16 +40,11 @@ jobs:
               - 'Taskfile.yml'
               - '.github/workflows/**'
 
-  frontend_deploy:
-    name: Frontend deploy (Vercel)
+  frontend_ci:
+    name: Frontend lint & test
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      # add ORG/PROJECT envs here if you use them:
-      # VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      # VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,26 +61,17 @@ jobs:
           sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
           sudo mv ./bin/task /usr/local/bin/task
 
-      # Explicit build + tests here so the deploy step is "pure deploy"
       - name: Frontend lint
         run: task frontend:lint
 
       - name: Frontend tests
         run: task frontend:test
 
-      - name: Frontend build
-        run: task frontend:build
-
-      - name: Frontend deploy
-        run: task frontend:deploy
-
-  backend_deploy:
-    name: Backend deploy (ECS/Fargate)
+  backend_ci:
+    name: Backend lint & test
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: eu-north-1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,7 +79,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.22' # or whatever you use
 
       - name: Install Task
         run: |
@@ -101,25 +91,17 @@ jobs:
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1
+      - name: Backend lint
+        run: task backend:lint
 
-      # backend:deploy already runs test + lint via deps (docker-build)
-      # So this single call covers test + lint + build + push + ECS update
-      - name: Backend deploy
-        run: task backend:deploy
+      - name: Backend tests
+        run: task backend:test
 
-  lambda_deploy:
-    name: Lambda deploy
+  lambda_ci:
+    name: Lambda lint & test
     needs: changes
     if: needs.changes.outputs.lambda == 'true'
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: eu-north-1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -127,7 +109,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.22' # match backend
 
       - name: Install Task
         run: |
@@ -139,13 +121,8 @@ jobs:
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1
+      - name: Lambda lint
+        run: task lambda:lint
 
-      # lambda:deploy includes lint + test + build + zip inside deps
-      - name: Lambda deploy
-        run: task lambda:deploy
+      - name: Lambda tests
+        run: task lambda:test
