@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "lint": "next lint",
+    "test": "vitest run"
+  }
+}
