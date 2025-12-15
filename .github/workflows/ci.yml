@@ -46,7 +46,7 @@ jobs:
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     env:
-      NX_CLOUD_NO_ANALYTICS: 1
+      NX_SKIP_NX_CLOUD: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4

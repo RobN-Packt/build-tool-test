@@ -1,6 +1,7 @@
 {
-  "buildCommand": "pnpm run vercel-build",
+  "buildCommand": "NX_SKIP_NX_CLOUD=true pnpm run vercel-build",
   "installCommand": "pnpm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "rootDirectory": "."
 }
 
