@@ -1,4 +1,5 @@
-const { TextDecoder, TextEncoder } = require('node:util');
+import { TextDecoder, TextEncoder } from 'node:util';
+import * as undici from 'undici';
 
 if (!globalThis.TextEncoder) {
   globalThis.TextEncoder = TextEncoder;
@@ -7,8 +8,6 @@ if (!globalThis.TextEncoder) {
 if (!globalThis.TextDecoder) {
   globalThis.TextDecoder = TextDecoder;
 }
-
-const undici = require('undici');
 
 if (!globalThis.fetch) {
   globalThis.fetch = undici.fetch;
