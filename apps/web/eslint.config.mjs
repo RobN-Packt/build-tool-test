@@ -68,5 +68,18 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-require-imports': 'off'
     }
+  },
+  {
+    files: ['tests/polyfills.js'],
+    languageOptions: {
+      sourceType: 'script',
+      ecmaVersion: 'latest',
+      globals: globals.node
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off',
+      'import/order': 'off'
+    }
   }
 );
