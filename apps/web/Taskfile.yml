@@ -38,6 +38,7 @@ tasks:
 
   deploy:
     dir: "{{.FRONTEND_DIR}}"
-    desc: "Deploys the frontend application to Vercel"
+    desc: "Deploys the frontend application to Vercel (runs lint, test, and build first)"
+    deps: [lint, test, build]
     cmds:
       - npx vercel deploy --prod --yes
