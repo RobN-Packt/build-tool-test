@@ -6,7 +6,7 @@
     "nx": "nx",
     "codegen": "pnpm exec tsx scripts/codegen.ts",
     "vercel-build-nx": "pnpm exec nx build web && rm -rf .next && cp -R apps/web/.next .next",
-    "vercel-build": "pnpm -C apps/web next build && rm -rf .next && cp -R apps/web/.next .next"
+    "vercel-build": "pnpm --filter ./apps/web... exec next build && rm -rf .next && cp -R apps/web/.next .next"
   },
   "dependencies": {
     "next": "14.2.26",
