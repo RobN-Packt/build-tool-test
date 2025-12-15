@@ -49,25 +49,29 @@ tasks:
       - aws ecr get-login-password --region {{.AWS_REGION}} | docker login --username AWS --password-stdin {{.ECR_REGISTRY}}
       - docker push {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
 
-  taskdef-register:
-    dir: "{{.BACKEND_DIR}}"
-    desc: Register a new task definition revision with the new image tag
-    deps: [docker-push]
-    cmds:
-      - sed 's/__IMAGE_TAG__/{{.DOCKER_TAG}}/g' ecs-task-def.json > ecs-task-def.rendered.json
-      - aws ecs register-task-definition --no-cli-pager --cli-input-json file://ecs-task-def.rendered.json --region {{.AWS_REGION}}
-
   deploy:
     dir: "{{.BACKEND_DIR}}"
     desc: Deploys backend to ECS
-    deps: [taskdef-register]
+    deps: [docker-push]
     cmds:
       - |
+          sed 's/__IMAGE_TAG__/{{.DOCKER_TAG}}/g' ecs-task-def.json > ecs-task-def.rendered.json
+
+          TASKDEF_ARN=$(aws ecs register-task-definition \
+            --no-cli-pager \
+            --cli-input-json file://ecs-task-def.rendered.json \
+            --region {{.AWS_REGION}} \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "Registered task definition: $TASKDEF_ARN"
+
           aws ecs update-service \
             --no-cli-pager \
             --cluster {{.ECS_CLUSTER}} \
             --service {{.ECS_SERVICE}} \
-            --task-definition build-tool-test \
+            --task-definition "$TASKDEF_ARN" \
             --force-new-deployment \
             --region {{.AWS_REGION}}
+
 
