@@ -14,6 +14,7 @@ tasks:
     sources:
       - package.json
       - pnpm-lock.yaml
+    run: once
     generates:
       - node_modules
 
