@@ -8,37 +8,33 @@ vars:
 
 tasks:
   install:
-    dir: "{{.FRONTEND_DIR}}"
     desc: "Installs the packages and dependencies for the next.js frontend"
     run: when_changed
     cmds:
-      - npm install
+      - pnpm install
     sources:
       - package.json
-      - package-lock.json
+      - pnpm-lock.yaml
     generates:
       - node_modules
 
   build:
-    dir: "{{.FRONTEND_DIR}}"
     desc: "Builds the next.js frontend"
     deps: [install]
     cmds:
-      - npm run build
+      - pnpm exec nx build web
 
   test:
-    dir: "{{.FRONTEND_DIR}}"
     desc: "Runs the tests for the frontend"
     deps: [install]
     cmds:
-      - npm run test
+      - pnpm exec nx test web
 
   lint:
-    dir: "{{.FRONTEND_DIR}}"
     desc: "Runs the linter for the frontend"
     deps: [install]
     cmds:
-      - npm run lint
+      - pnpm exec nx lint web
 
   deploy:
     dir: "{{.FRONTEND_DIR}}"

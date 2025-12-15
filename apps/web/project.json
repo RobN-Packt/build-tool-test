@@ -13,9 +13,9 @@
             }
         },
         "test": {
-            "executor": "nx:run-commands",
+            "executor": "@nx/vitest:test",
             "options": {
-                "command": "pnpm --filter book-web test"
+                "config": "apps/web/vitest.config.js"
             }
         },
         "build": {
