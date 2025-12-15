@@ -8,7 +8,8 @@ const nextConfig = {
   eslint: {
     // Next's built-in lint runner isn't yet compatible with ESLint 9 flat config.
     ignoreDuringBuilds: true
-  }
+  },
+    outputFileTracing: false,
 };
 
 module.exports = nextConfig;
