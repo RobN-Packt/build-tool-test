@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // Only use standalone output for Docker builds, not Vercel
+  ...(process.env.DOCKER_BUILD === 'true' ? { output: 'standalone' } : {}),
   experimental: {
     optimizePackageImports: ['@testing-library/react', '@testing-library/user-event']
   },
