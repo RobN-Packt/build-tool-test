@@ -38,9 +38,9 @@ tasks:
       - pnpm build
 
   deploy:
-    desc: Deploy frontend to Vercel (prebuilt)
+    desc: Deploy frontend to Vercel (prebuilt, production)
     deps: [build]
     cmds:
-      - pnpm dlx vercel --cwd "{{.FRONTEND_DIR}}" pull --yes --environment=production --token "$VERCEL_TOKEN"
-      - pnpm dlx vercel --cwd "{{.FRONTEND_DIR}}" build --token "$VERCEL_TOKEN"
-      - pnpm dlx vercel --cwd "{{.FRONTEND_DIR}}" deploy --prod --yes --prebuilt --token "$VERCEL_TOKEN"
+      - pnpm dlx vercel --cwd "apps/web" pull --yes --environment=production --token "$VERCEL_TOKEN"
+      - pnpm dlx vercel --cwd "apps/web" build --prod --token "$VERCEL_TOKEN"
+      - pnpm dlx vercel --cwd "apps/web" deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
