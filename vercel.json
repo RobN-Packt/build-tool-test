@@ -1,6 +1,6 @@
 {
-  "framework": "nextjs",
-  "rootDirectory": "apps/web",
-  "installCommand": "pnpm install --frozen-lockfile"
+ "buildCommand": "pnpm run vercel-build",
+  "installCommand": "pnpm install",
+  "framework": "nextjs"
 }
 
