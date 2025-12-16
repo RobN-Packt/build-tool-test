@@ -45,8 +45,6 @@ jobs:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
-    env:
-      USE_NX: ${{ vars.USE_NX || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,34 +62,24 @@ jobs:
           cache-dependency-path: 'pnpm-lock.yaml'
 
       - name: Install Task
-        if: env.USE_NX != 'true'
         run: |
-          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
-          sudo mv ./bin/task /usr/local/bin/task
+          TASK_VERSION="v3.35.0"
+          curl -L "https://github.com/go-task/task/releases/download/${TASK_VERSION}/task_linux_amd64.tar.gz" -o task.tar.gz
+          tar -xzf task.tar.gz
+          sudo mv task /usr/local/bin/task
+          chmod +x /usr/local/bin/task
 
-      - name: Frontend lint (Task)
-        if: env.USE_NX != 'true'
+      - name: Frontend lint
         run: task frontend:lint
 
-      - name: Frontend tests (Task)
-        if: env.USE_NX != 'true'
+      - name: Frontend tests
         run: task frontend:test
-
-      - name: Frontend lint (Nx)
-        if: env.USE_NX == 'true'
-        run: pnpm install --frozen-lockfile && pnpm exec nx lint web
-
-      - name: Frontend tests (Nx)
-        if: env.USE_NX == 'true'
-        run: pnpm exec nx test web
 
   backend_ci:
     name: Backend lint & test
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    env:
-      USE_NX: ${{ vars.USE_NX || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -99,56 +87,32 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22' # or whatever you use
-
-      - name: Setup pnpm
-        if: env.USE_NX == 'true'
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.10.0
-
-      - name: Setup Node
-        if: env.USE_NX == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-          cache-dependency-path: 'pnpm-lock.yaml'
+          go-version: '1.22'
 
       - name: Install Task
-        if: env.USE_NX != 'true'
         run: |
-          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
-          sudo mv ./bin/task /usr/local/bin/task
+          TASK_VERSION="v3.35.0"
+          curl -L "https://github.com/go-task/task/releases/download/${TASK_VERSION}/task_linux_amd64.tar.gz" -o task.tar.gz
+          tar -xzf task.tar.gz
+          sudo mv task /usr/local/bin/task
+          chmod +x /usr/local/bin/task
 
       - name: Install golangci-lint
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      - name: Backend lint (Task)
-        if: env.USE_NX != 'true'
+      - name: Backend lint
         run: task backend:lint
 
-      - name: Backend tests (Task)
-        if: env.USE_NX != 'true'
+      - name: Backend tests
         run: task backend:test
-
-      - name: Backend lint (Nx)
-        if: env.USE_NX == 'true'
-        run: pnpm install --frozen-lockfile && pnpm exec nx lint api
-
-      - name: Backend tests (Nx)
-        if: env.USE_NX == 'true'
-        run: pnpm exec nx test api
 
   lambda_ci:
     name: Lambda lint & test
     needs: changes
     if: needs.changes.outputs.lambda == 'true'
     runs-on: ubuntu-latest
-    env:
-      USE_NX: ${{ vars.USE_NX || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -156,45 +120,23 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22' # match backend
-
-      - name: Setup pnpm
-        if: env.USE_NX == 'true'
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.10.0
-
-      - name: Setup Node
-        if: env.USE_NX == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-          cache-dependency-path: 'pnpm-lock.yaml'
+          go-version: '1.22'
 
       - name: Install Task
-        if: env.USE_NX != 'true'
         run: |
-          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
-          sudo mv ./bin/task /usr/local/bin/task
+          TASK_VERSION="v3.35.0"
+          curl -L "https://github.com/go-task/task/releases/download/${TASK_VERSION}/task_linux_amd64.tar.gz" -o task.tar.gz
+          tar -xzf task.tar.gz
+          sudo mv task /usr/local/bin/task
+          chmod +x /usr/local/bin/task
 
       - name: Install golangci-lint
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      - name: Lambda lint (Task)
-        if: env.USE_NX != 'true'
+      - name: Lambda lint
         run: task lambda:lint
 
-      - name: Lambda tests (Task)
-        if: env.USE_NX != 'true'
+      - name: Lambda tests
         run: task lambda:test
-
-      - name: Lambda lint (Nx)
-        if: env.USE_NX == 'true'
-        run: pnpm install --frozen-lockfile && pnpm exec nx lint lambda
-
-      - name: Lambda tests (Nx)
-        if: env.USE_NX == 'true'
-        run: pnpm exec nx test lambda
