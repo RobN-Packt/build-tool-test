@@ -44,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      USE_NX: ${{ vars.USE_NX || 'false' }}
       # add ORG/PROJECT envs here if you use them:
       # VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       # VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -63,13 +64,21 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
 
-      - name: Install Task
+      - name: Frontend deploy (Task)
+        if: env.USE_NX != 'true'
         run: |
           sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
           sudo mv ./bin/task /usr/local/bin/task
+          task frontend:deploy
 
-      - name: Frontend deploy
-        run: task frontend:deploy
+      - name: Frontend deploy (Nx)
+        if: env.USE_NX == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec nx lint web
+          pnpm exec nx test web
+          pnpm exec nx build web
+          pnpm dlx vercel deploy --prod --yes --prebuilt --force --token "$VERCEL_TOKEN"
 
   backend_deploy:
     name: Backend deploy (ECS/Fargate)
@@ -78,6 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: eu-north-1
+      USE_NX: ${{ vars.USE_NX || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -87,7 +97,22 @@ jobs:
         with:
           go-version: '1.22'
 
+      - name: Setup pnpm
+        if: env.USE_NX == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
+      - name: Setup Node
+        if: env.USE_NX == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
       - name: Install Task
+        if: env.USE_NX != 'true'
         run: |
           sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
           sudo mv ./bin/task /usr/local/bin/task
@@ -104,10 +129,40 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
 
-      # backend:deploy already runs test + lint via deps (docker-build)
-      # So this single call covers test + lint + build + push + ECS update
-      - name: Backend deploy
+      - name: Backend deploy (Task)
+        if: env.USE_NX != 'true'
         run: task backend:deploy
+
+      - name: Backend deploy (Nx)
+        if: env.USE_NX == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec nx lint api
+          pnpm exec nx test api
+          GIT_SHA=$(git rev-parse --short HEAD)
+          AWS_ACCOUNT_ID="750969166615"
+          ECR_REPOSITORY="build-tool-test"
+          ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          DOCKER_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}"
+          DOCKER_TAG="${GIT_SHA}"
+          docker build -t "${DOCKER_IMAGE}:${DOCKER_TAG}" ./apps/api
+          aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+          docker push "${DOCKER_IMAGE}:${DOCKER_TAG}"
+          sed "s/__IMAGE_TAG__/${DOCKER_TAG}/g" apps/api/ecs-task-def.json > apps/api/ecs-task-def.rendered.json
+          TASKDEF_ARN=$(aws ecs register-task-definition \
+            --no-cli-pager \
+            --cli-input-json file://apps/api/ecs-task-def.rendered.json \
+            --region "${AWS_REGION}" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "Registered task definition: $TASKDEF_ARN"
+          aws ecs update-service \
+            --no-cli-pager \
+            --cluster build-tool-test \
+            --service build-tool-test-service-excyce51 \
+            --task-definition "$TASKDEF_ARN" \
+            --force-new-deployment \
+            --region "${AWS_REGION}"
 
   lambda_deploy:
     name: Lambda deploy
@@ -116,6 +171,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: eu-north-1
+      USE_NX: ${{ vars.USE_NX || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -125,7 +181,22 @@ jobs:
         with:
           go-version: '1.22'
 
+      - name: Setup pnpm
+        if: env.USE_NX == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
+      - name: Setup Node
+        if: env.USE_NX == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
       - name: Install Task
+        if: env.USE_NX != 'true'
         run: |
           sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
           sudo mv ./bin/task /usr/local/bin/task
@@ -142,6 +213,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
 
-      # lambda:deploy includes lint + test + build + zip inside deps
-      - name: Lambda deploy
+      - name: Lambda deploy (Task)
+        if: env.USE_NX != 'true'
         run: task lambda:deploy
+
+      - name: Lambda deploy (Nx)
+        if: env.USE_NX == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec nx lint lambda
+          pnpm exec nx test lambda
+          pnpm exec nx build lambda
+          cd apps/api/internal/lambda/bookemailer
+          cp dist/bootstrap bootstrap
+          zip deployment.zip bootstrap
+          aws lambda update-function-code \
+            --function-name built-tool-test-email \
+            --zip-file fileb://deployment.zip \
+            --region "${AWS_REGION}" \
+            --no-cli-pager

@@ -40,4 +40,4 @@ tasks:
     dir: "{{.FRONTEND_DIR}}"
     deps: [build]
     cmds:
-      - pnpm dlx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
+      - pnpm dlx vercel deploy --prod --yes --prebuilt --force --token "$VERCEL_TOKEN"
