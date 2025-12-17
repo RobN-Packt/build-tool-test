@@ -1,46 +1,43 @@
 version: '3'
 
+# If the task file is run via the root task file, the dir attribute is required to prevent the task file being run from the root.
+# It is not required when running the task file directly as opposed as from root.
+
 vars:
-  FRONTEND_DIR: apps/web
+  FRONTEND_DIR: ./apps/web
 
 tasks:
   install:
     dir: "{{.FRONTEND_DIR}}"
-    desc: Install frontend deps
-    run: once
     cmds:
       - pnpm install --frozen-lockfile
     sources:
       - package.json
       - pnpm-lock.yaml
+    run: once
     generates:
       - node_modules
 
-  lint:
-    dir: "{{.FRONTEND_DIR}}"
-    desc: Lint frontend
-    deps: [install]
-    cmds:
-      - pnpm lint
-
   test:
     dir: "{{.FRONTEND_DIR}}"
-    desc: Test frontend
     deps: [install]
     cmds:
       - pnpm test --if-present
 
+  lint:
+    dir: "{{.FRONTEND_DIR}}"
+    deps: [install]
+    cmds:
+      - pnpm lint
+
   build:
     dir: "{{.FRONTEND_DIR}}"
-    desc: Build frontend
     deps: [install, lint, test]
     cmds:
       - pnpm build
 
   deploy:
-    desc: Deploy frontend to Vercel (prebuilt)
+    dir: "{{.FRONTEND_DIR}}"
     deps: [build]
     cmds:
-      - pnpm dlx vercel --cwd "{{.FRONTEND_DIR}}" pull --yes --environment=production --token "$VERCEL_TOKEN"
-      - pnpm dlx vercel --cwd "{{.FRONTEND_DIR}}" build --token "$VERCEL_TOKEN"
-      - pnpm dlx vercel --cwd "{{.FRONTEND_DIR}}" deploy --prod --yes --prebuilt --token "$VERCEL_TOKEN"
+      - pnpm dlx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
