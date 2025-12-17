@@ -13,14 +13,14 @@ tasks:
   ci:
     desc: Run tests + lint for all services
     cmds:
-      - task web:ci
-      - task api:ci
+      - task frontend:ci
+      - task backend:ci
       - task lambda:ci
 
   deploy:
     desc: Deploy web + api + lambda
     cmds:
       - task ci
-      - task web:deploy
-      - task api:deploy
+      - task frontend:deploy
+      - task backend:deploy
       - task lambda:deploy
