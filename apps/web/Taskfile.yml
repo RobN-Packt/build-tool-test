@@ -9,7 +9,7 @@ tasks:
   test:
     deps: [install]
     cmds:
-      - pnpm -w --filter ./apps/web... run test --if-present
+      - pnpm -w --filter ./apps/web... run test
 
   lint:
     deps: [install]
@@ -27,4 +27,7 @@ tasks:
   deploy:
     deps: [ci, build]
     cmds:
-      - pnpm -w --filter ./apps/web... exec vercel deploy --prod --yes --token "$VERCEL_TOKEN"
+      - test -n "$VERCEL_TOKEN" || (echo "VERCEL_TOKEN is not set" && exit 1)
+      - vercel pull --environment=production --yes --token "$VERCEL_TOKEN"
+      - vercel build --prod --token "$VERCEL_TOKEN"
+      - vercel deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"

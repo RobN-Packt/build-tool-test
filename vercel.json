@@ -1,6 +1,0 @@
-{
-  "buildCommand": "pnpm run vercel-build",
-  "installCommand": "pnpm install --frozen-lockfile",
-  "framework": "nextjs"
-}
-
