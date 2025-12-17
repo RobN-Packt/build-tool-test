@@ -8,7 +8,11 @@
   "containerDefinitions": [
     {
       "name": "build-tool-test",
-      "image": "750969166615.dkr.ecr.eu-north-1.amazonaws.com/build-tool-test:__IMAGE_TAG__"
+      "image": "750969166615.dkr.ecr.eu-north-1.amazonaws.com/build-tool-test:__IMAGE_TAG__",
+      "secrets": [
+        { "name": "DB_DSN", "valueFrom": "arn:aws:ssm:eu-north-1:750969166615:parameter/build-tool-test/prod/DB_DSN" },
+        { "name": "SNS_TOPIC_ARN",   "valueFrom": "arn:aws:ssm:eu-north-1:750969166615:parameter/build-tool-test/prod/SNS_TOPIC_ARN" }
+      ]
     }
   ]
 }
