@@ -78,9 +78,7 @@ jobs:
           pnpm exec nx lint web
           pnpm exec nx test web
           pnpm exec nx build web
-          cd apps/web
-          pnpm dlx vercel build --token "$VERCEL_TOKEN"
-          pnpm dlx vercel deploy --prod --yes --prebuilt --token "$VERCEL_TOKEN"
+          pnpm dlx vercel deploy --prod --yes --prebuilt --force --token "$VERCEL_TOKEN"
 
   backend_deploy:
     name: Backend deploy (ECS/Fargate)
