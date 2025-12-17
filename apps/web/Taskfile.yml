@@ -16,17 +16,17 @@ tasks:
   test:
     dir: "{{.DIR}}"
     deps: [install]
-    cmds: [pnpm test --if-present]
+    cmds: [pnpm run test --if-present]
 
   lint:
     dir: "{{.DIR}}"
     deps: [install]
-    cmds: [pnpm lint]
+    cmds: [pnpm run lint]
 
   build:
     dir: "{{.DIR}}"
     deps: [install]
-    cmds: [pnpm build]
+    cmds: [pnpm run build]
 
   ci:
     deps: [lint, test]

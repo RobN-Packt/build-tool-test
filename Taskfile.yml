@@ -1,5 +1,9 @@
 version: "3"
 
+vars:
+  BACKEND_DIR: ./apps/api
+  AWS_REGION: eu-north-1
+
 includes:
   frontend: ./apps/web/Taskfile.yml
   backend: ./apps/api/Taskfile.yml
