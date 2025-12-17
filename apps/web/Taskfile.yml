@@ -1,38 +1,30 @@
 version: "3"
 
-vars:
-  DIR: .
-
 tasks:
   install:
-    dir: "{{.DIR}}"
     cmds:
       - pnpm install --frozen-lockfile
-    sources:
-      - package.json
-      - pnpm-lock.yaml
     run: once
 
   test:
-    dir: "{{.DIR}}"
     deps: [install]
-    cmds: [pnpm run test --if-present]
+    cmds:
+      - pnpm -w --filter ./apps/web... run test --if-present
 
   lint:
-    dir: "{{.DIR}}"
     deps: [install]
-    cmds: [pnpm run lint]
+    cmds:
+      - pnpm -w --filter ./apps/web... run lint
 
   build:
-    dir: "{{.DIR}}"
     deps: [install]
-    cmds: [pnpm run build]
+    cmds:
+      - pnpm -w --filter ./apps/web... run vercel-build
 
   ci:
     deps: [lint, test]
 
   deploy:
-    dir: "{{.DIR}}"
-    deps: [build]
+    deps: [ci, build]
     cmds:
-      - pnpm dlx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
+      - pnpm -w --filter ./apps/web... exec vercel deploy --prod --yes --token "$VERCEL_TOKEN"
