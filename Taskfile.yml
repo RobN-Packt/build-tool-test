@@ -1,45 +1,26 @@
-version: '3'
-
-vars:
-  BACKEND_DIR: ./apps/api
-  AWS_REGION: eu-north-1
+version: "3"
 
 includes:
-  frontend: ./apps/web/Taskfile.yml
-  backend: ./apps/api/Taskfile.yml
+  web: ./apps/web/Taskfile.yml
+  api: ./apps/api/Taskfile.yml
   lambda: ./apps/api/internal/lambda/Taskfile.yml
 
 tasks:
   default:
-    cmds:
-      - task: help
-
-  help:
-    desc: List common tasks
-    cmds:
-      - |
-          echo "Frontend: task build | test | lint | dev | deploy"
-          echo "Backend:  task build  | test | lint | docker | deploy"
-          echo "Lambda:   task build   | test | deploy"
-          echo "Pipelines: task ci | task deploy"
+    cmds: [task -l]
     silent: true
 
   ci:
-    desc: Runs the full test and linting suite for all services.
-    deps:
-      - frontend:test
-      - frontend:lint
-      - backend:test
-      - backend:lint
-      - lambda:test
-      - lambda:lint
+    desc: Run tests + lint for all services
+    cmds:
+      - task web:ci
+      - task api:ci
+      - task lambda:ci
 
   deploy:
-    desc: Deploy frontend to Vercel, backend to ECS, and Lambda (CI only)
-    deps:
-      - ci
+    desc: Deploy web + api + lambda
     cmds:
-      - task frontend:deploy
-      - task backend:deploy
+      - task ci
+      - task web:deploy
+      - task api:deploy
       - task lambda:deploy
-

@@ -1,43 +1,38 @@
-version: '3'
-
-# If the task file is run via the root task file, the dir attribute is required to prevent the task file being run from the root.
-# It is not required when running the task file directly as opposed as from root.
+version: "3"
 
 vars:
-  FRONTEND_DIR: ./apps/web
+  DIR: .
 
 tasks:
   install:
-    dir: "{{.FRONTEND_DIR}}"
+    dir: "{{.DIR}}"
     cmds:
       - pnpm install --frozen-lockfile
     sources:
       - package.json
       - pnpm-lock.yaml
     run: once
-    generates:
-      - node_modules
 
   test:
-    dir: "{{.FRONTEND_DIR}}"
+    dir: "{{.DIR}}"
     deps: [install]
-    cmds:
-      - pnpm test --if-present
+    cmds: [pnpm test --if-present]
 
   lint:
-    dir: "{{.FRONTEND_DIR}}"
+    dir: "{{.DIR}}"
     deps: [install]
-    cmds:
-      - pnpm lint
+    cmds: [pnpm lint]
 
   build:
-    dir: "{{.FRONTEND_DIR}}"
-    deps: [install, lint, test]
-    cmds:
-      - pnpm build
+    dir: "{{.DIR}}"
+    deps: [install]
+    cmds: [pnpm build]
+
+  ci:
+    deps: [lint, test]
 
   deploy:
-    dir: "{{.FRONTEND_DIR}}"
+    dir: "{{.DIR}}"
     deps: [build]
     cmds:
       - pnpm dlx vercel deploy --prod --yes --token "$VERCEL_TOKEN"

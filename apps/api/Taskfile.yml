@@ -1,7 +1,4 @@
-version: '3'
-
-# If the task file is run via the root task file, the dir attribute is required to prevent the task file being run from the root.
-# It is not required when running the task file directly as opposed as from root.
+version: "3"
 
 vars:
   AWS_ACCOUNT_ID: "750969166615"
@@ -17,33 +14,27 @@ vars:
 tasks:
   tidy:
     dir: "{{.BACKEND_DIR}}"
-    desc: Go mod tidy for the backend application
-    cmds:
-      - go mod tidy
+    cmds: [go mod tidy]
 
   test:
     dir: "{{.BACKEND_DIR}}"
-    desc: Run the tests for the backend application
     deps: [tidy]
-    cmds:
-      - go test ./...
+    cmds: [go test ./...]
 
   lint:
     dir: "{{.BACKEND_DIR}}"
-    desc: Run the linter (golangci-lint) for the backend application
-    cmds:
-      - golangci-lint run
+    cmds: [golangci-lint run]
+
+  ci:
+    deps: [test, lint]
 
   docker-build:
     dir: "{{.BACKEND_DIR}}"
-    desc: Build docker image for ECS
-    deps: [test, lint]
     cmds:
       - docker build -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} .
 
   docker-push:
     dir: "{{.BACKEND_DIR}}"
-    desc: Pushes the Docker image to the ecr
     deps: [docker-build]
     cmds:
       - aws ecr get-login-password --region {{.AWS_REGION}} | docker login --username AWS --password-stdin {{.ECR_REGISTRY}}
@@ -51,27 +42,20 @@ tasks:
 
   deploy:
     dir: "{{.BACKEND_DIR}}"
-    desc: Deploys backend to ECS
     deps: [docker-push]
     cmds:
       - |
-          sed 's/__IMAGE_TAG__/{{.DOCKER_TAG}}/g' ecs-task-def.json > ecs-task-def.rendered.json
-
-          TASKDEF_ARN=$(aws ecs register-task-definition \
-            --no-cli-pager \
-            --cli-input-json file://ecs-task-def.rendered.json \
-            --region {{.AWS_REGION}} \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-
-          echo "Registered task definition: $TASKDEF_ARN"
-
-          aws ecs update-service \
-            --no-cli-pager \
-            --cluster {{.ECS_CLUSTER}} \
-            --service {{.ECS_SERVICE}} \
-            --task-definition "$TASKDEF_ARN" \
-            --force-new-deployment \
-            --region {{.AWS_REGION}}
-
-
+        sed 's/__IMAGE_TAG__/{{.DOCKER_TAG}}/g' ecs-task-def.json > ecs-task-def.rendered.json
+        TASKDEF_ARN=$(aws ecs register-task-definition \
+          --no-cli-pager \
+          --cli-input-json file://ecs-task-def.rendered.json \
+          --region {{.AWS_REGION}} \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        aws ecs update-service \
+          --no-cli-pager \
+          --cluster {{.ECS_CLUSTER}} \
+          --service {{.ECS_SERVICE}} \
+          --task-definition "$TASKDEF_ARN" \
+          --force-new-deployment \
+          --region {{.AWS_REGION}}
