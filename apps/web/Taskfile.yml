@@ -34,4 +34,4 @@ tasks:
 
       - pnpm dlx vercel@latest pull --environment=production --yes --token "$VERCEL_TOKEN"
       - pnpm dlx vercel@latest build --prod --token "$VERCEL_TOKEN"
-      - pnpm dlx vercel@latest deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
+      - pnpm dlx vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
