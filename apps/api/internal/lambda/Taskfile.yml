@@ -22,10 +22,12 @@ tasks:
 
   build:
     desc: Build Lambda binary
-    dir: "{{.BACKEND_DIR}}/{{.LAMBDA_DIR}}"
+    dir: "{{.BACKEND_DIR}}"
     deps: [lint, test]
     cmds:
-      - CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o bootstrap .
+      - CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o {{.LAMBDA_DIR}}/bootstrap ./cmd/book_created_emailer
+      - chmod +x {{.LAMBDA_DIR}}/bootstrap
+      - file {{.LAMBDA_DIR}}/bootstrap
 
   zip:
     desc: Zip Lambda binary
