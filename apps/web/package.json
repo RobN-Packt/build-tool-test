@@ -1,5 +1,7 @@
 {
-  "scripts": {
+  "name": "web",
+  "version": "0.0.1",
+    "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -7,9 +9,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "next": "16.0.10",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "next": "14.2.26",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "styled-jsx": "^5.1.1"
   }
 }
