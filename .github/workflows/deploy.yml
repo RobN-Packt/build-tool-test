@@ -7,35 +7,35 @@ on:
       - main
 
 jobs:
-  changes:
-    name: Detect changed projects
-    runs-on: ubuntu-latest
-    outputs:
-      frontend: ${{ steps.filter.outputs.frontend }}
-      backend:  ${{ steps.filter.outputs.backend }}
-      lambda:   ${{ steps.filter.outputs.lambda }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  # changes:
+  #   name: Detect changed projects
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     frontend: ${{ steps.filter.outputs.frontend }}
+  #     backend:  ${{ steps.filter.outputs.backend }}
+  #     lambda:   ${{ steps.filter.outputs.lambda }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
 
-      - name: Detect changes
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            frontend:
-              - 'apps/web/**'
-              - 'Taskfile.yml'
-              - '.github/workflows/**'
-            backend:
-              - 'apps/api/**'
-              - '!apps/api/internal/lambda/**'
-              - 'Taskfile.yml'
-              - '.github/workflows/**'
-            lambda:
-              - 'apps/api/internal/lambda/**'
-              - 'Taskfile.yml'
-              - '.github/workflows/**'
+  #     - name: Detect changes
+  #       id: filter
+  #       uses: dorny/paths-filter@v3
+  #       with:
+  #         filters: |
+  #           frontend:
+  #             - 'apps/web/**'
+  #             - 'Taskfile.yml'
+  #             - '.github/workflows/**'
+  #           backend:
+  #             - 'apps/api/**'
+  #             - '!apps/api/internal/lambda/**'
+  #             - 'Taskfile.yml'
+  #             - '.github/workflows/**'
+  #           lambda:
+  #             - 'apps/api/internal/lambda/**'
+  #             - 'Taskfile.yml'
+  #             - '.github/workflows/**'
 
   frontend_deploy:
     name: Frontend deploy (Vercel)

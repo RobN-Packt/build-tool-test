@@ -35,3 +35,5 @@ vitest.config.*.timestamp*
 out
 .vercel
 .env*.local
+
+cookies.txt
