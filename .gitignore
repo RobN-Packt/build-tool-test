@@ -1,5 +1,4 @@
 node_modules/
-apps/web/node_modules/
 .pnpm-store/
 .DS_Store
 .env
@@ -10,30 +9,31 @@ ecs-task-def.rendered.json
 bootstrap
 deployment.zip
 
-# Node / Frontend
-node_modules/
-apps/web/.next/
-apps/web/.turbo/
-apps/web/.eslintcache
-apps/web/dist/
+# Build artifacts
+dist/
+apps/*/dist/
+apps/*/bin/
+apps/*/.next/
+apps/*/.turbo/
+apps/*/.eslintcache
+.next/
+out/
+.vercel/
 
-# Backend
-apps/api/bin/
-
-# Lambda
+# Lambda build artifacts
 apps/api/internal/lambda/main
 apps/api/internal/lambda/main.zip
+apps/api/internal/lambda/*/dist/
+apps/api/internal/lambda/*/deployment.zip
+apps/api/internal/lambda/*/bootstrap
 
-
-
+# Nx
 .nx/cache
 .nx/workspace-data
 vitest.config.*.timestamp*
 
-# Next.js
-.next
-out
-.vercel
+# Environment files
 .env*.local
 
+# Misc
 cookies.txt
